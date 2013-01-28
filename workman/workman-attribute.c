@@ -58,7 +58,7 @@ workman_attribute_class_init(WorkmanAttributeClass *klass)
 
     g_klass->finalize = workman_attribute_finalize;
 
-    g_type_class_add_private(klass, sizeof (WorkmanAttributePrivate));
+    g_type_class_add_private(klass, sizeof(WorkmanAttributePrivate));
 }
 
 

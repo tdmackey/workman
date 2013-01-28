@@ -38,7 +38,7 @@ workman_partition_class_init(WorkmanPartitionClass *klass)
 {
     GObjectClass *g_klass = G_OBJECT_CLASS(klass);
 
-    g_type_class_add_private(klass, sizeof (WorkmanPartitionPrivate));
+    g_type_class_add_private(klass, sizeof(WorkmanPartitionPrivate));
 }
 
 

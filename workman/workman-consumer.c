@@ -38,7 +38,7 @@ workman_consumer_class_init(WorkmanConsumerClass *klass)
 {
     GObjectClass *g_klass = G_OBJECT_CLASS(klass);
 
-    g_type_class_add_private(klass, sizeof (WorkmanConsumerPrivate));
+    g_type_class_add_private(klass, sizeof(WorkmanConsumerPrivate));
 }
 
 

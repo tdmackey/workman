@@ -53,7 +53,7 @@ workman_process_class_init(WorkmanProcessClass *klass)
 
     g_klass->finalize = workman_process_finalize;
 
-    g_type_class_add_private(klass, sizeof (WorkmanProcessPrivate));
+    g_type_class_add_private(klass, sizeof(WorkmanProcessPrivate));
 }
 
 

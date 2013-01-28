@@ -66,6 +66,13 @@ useless_free_options =				\
   --name=xmlXPathFreeContext			\
   --name=xmlXPathFreeObject
 
+syntax-check: bracket-spacing-check
+
+bracket-spacing-check:
+	$(AM_V_GEN)files=`$(VC_LIST) | grep '\.c$$'` ; \
+	$(PERL) $(top_srcdir)/build-aux/bracket-spacing.pl $$files || \
+	  (echo $(ME): incorrect whitespace around brackets, see HACKING for rules && exit 1)
+
 # Ensure that no C source file uses TABs for indentation.
 space_indent_files=(\.[ch])
 sc_TAB_in_indentation:

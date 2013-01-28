@@ -38,7 +38,7 @@ workman_manager_class_init(WorkmanManagerClass *klass)
 {
     GObjectClass *g_klass = G_OBJECT_CLASS(klass);
 
-    g_type_class_add_private(klass, sizeof (WorkmanManagerPrivate));
+    g_type_class_add_private(klass, sizeof(WorkmanManagerPrivate));
 }
 
 
