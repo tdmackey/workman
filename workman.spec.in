@@ -1,0 +1,67 @@
+# -*- rpm-spec -*-
+
+Name: @PACKAGE@
+Version: @VERSION@
+Release: 1%{?dist}%{?extra_release}
+Summary: Resource administration shell
+Group: Development/Libraries
+License: LGPLv2+
+URL: http://xxxx
+Source0: %{name}-%{version}.tar.gz
+
+BuildRequires: glib2-devel >= 2.22.0
+BuildRequires: gobject-introspection-devel
+
+%package devel
+Group: Development/Libraries
+Summary: Resource administration shell
+Requires: %{name} = %{version}-%{release}
+
+%description
+This package provides a the resource administration shell
+and library
+
+%description devel
+This package provides development header files and libraries for
+the resource administration shell library
+
+%prep
+%setup -q
+
+%build
+
+%configure --enable-introspection
+%__make %{?_smp_mflags}
+
+
+%install
+rm -rf $RPM_BUILD_ROOT
+%__make install  DESTDIR=$RPM_BUILD_ROOT
+rm -f $RPM_BUILD_ROOT%{_libdir}/libworkman-1.0.a
+rm -f $RPM_BUILD_ROOT%{_libdir}/libworkman-1.0.la
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig
+
+%files
+%defattr(-,root,root,-)
+%doc README COPYING AUTHORS ChangeLog NEWS
+%{_libdir}/libworkman-1.0.so.*
+%{_libdir}/girepository-1.0/Workman-1.0.typelib
+
+%files devel
+%defattr(-,root,root,-)
+%{_libdir}/libworkman-1.0.so
+%{_libdir}/pkgconfig/workman-1.0.pc
+%dir %{_includedir}/workman-1.0
+%dir %{_includedir}/workman-1.0/workman
+%{_includedir}/workman-1.0/workman/workman.h
+%{_includedir}/workman-1.0/workman/workman-*.h
+%{_datadir}/gir-1.0/Workman-1.0.gir
+%{_datadir}/gtk-doc/html/workman
+
+%changelog

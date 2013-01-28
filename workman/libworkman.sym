@@ -1,0 +1,16 @@
+LIBworkman_0.0.1 {
+  global:
+        workman_init;
+        workman_init_check;
+
+  local:
+        *;
+};
+
+#LIBworkman_0.0.2 {
+#  global:
+#	workman_foo;
+#	workman_bar;
+#} LIBworkman_0.0.1;
+
+# .... define new API here using predicted next version number ....
