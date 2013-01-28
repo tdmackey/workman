@@ -1,5 +1,5 @@
 /*
- * workman.h: workload manager
+ * workman-manager.c: workload manager
  *
  * Copyright (C) 2013 Red Hat, Inc.
  *
@@ -20,18 +20,44 @@
  * Author: Daniel P. Berrange <berrange@redhat.com>
  */
 
-#ifndef __WORKMAN_H__
-# define __WORKMAN_H__
+#include <config.h>
 
-# include <workman/workman-main.h>
-# include <workman/workman-attribute.h>
-# include <workman/workman-process.h>
-# include <workman/workman-object.h>
-# include <workman/workman-partition.h>
-# include <workman/workman-consumer.h>
-# include <workman/workman-manager.h>
+#include "workman.h"
 
-#endif /* __WORKMAN_H__ */
+G_DEFINE_TYPE(WorkmanManager, workman_manager, G_TYPE_OBJECT);
+
+#define WORKMAN_MANAGER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE((obj), WORKMAN_TYPE_MANAGER, WorkmanManagerPrivate))
+
+
+struct _WorkmanManagerPrivate {
+    gboolean unused;
+};
+
+static void
+workman_manager_class_init(WorkmanManagerClass *klass)
+{
+    GObjectClass *g_klass = G_OBJECT_CLASS(klass);
+
+    g_type_class_add_private(klass, sizeof (WorkmanManagerPrivate));
+}
+
+
+static void
+workman_manager_init(WorkmanManager *attr)
+{
+    WorkmanManagerPrivate *priv;
+    attr->priv = priv = WORKMAN_MANAGER_GET_PRIVATE(attr);
+
+}
+
+
+WorkmanManager *workman_manager_new(void)
+{
+    return WORKMAN_MANAGER(g_object_new(WORKMAN_TYPE_MANAGER,
+                                        NULL));
+}
+
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

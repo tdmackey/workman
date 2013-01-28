@@ -147,3 +147,11 @@ gboolean workman_init_check(int *argc G_GNUC_UNUSED,
 
     return TRUE;
 }
+
+/*
+ * Local variables:
+ *  indent-tabs-mode: nil
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ */

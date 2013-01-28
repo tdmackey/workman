@@ -6,10 +6,24 @@ lib_LTLIBRARIES = libworkman-1.0.la
 libworkman_1_0_ladir = $(includedir)/workman-1.0/workman
 libworkman_1_0_la_HEADERS = \
 			workman.h \
-			workman-main.h
+			workman-main.h \
+			workman-attribute.h \
+			workman-process.h \
+			workman-object.h \
+			workman-partition.h \
+			workman-consumer.h \
+			workman-manager.h \
+                        $(NULL)
 libworkman_1_0_la_SOURCES = \
 			$(libworkman_1_0_la_HEADERS) \
-			workman-main.c
+			workman-main.c \
+			workman-attribute.c \
+			workman-process.c \
+			workman-object.c \
+			workman-partition.c \
+			workman-consumer.c \
+			workman-manager.c \
+                        $(NULL)
 libworkman_1_0_la_CFLAGS = \
 			-DWORKMAN_BUILD \
 			-DG_LOG_DOMAIN="\"workman\"" \
@@ -34,8 +48,8 @@ Workman-1.0.gir: libworkman-1.0.la $(G_IR_SCANNER) Makefile.am
                 --warn-all \
                 --namespace Workman \
                 --nsversion 1.0 \
-                --include GLib-2.0 \
-                --identifier-prefix=workman \
+                --include GObject-2.0 \
+                --identifier-prefix=Workman \
                 --symbol-prefix=workman \
                 --library=$(builddir)/libworkman-1.0.la \
                 --output $@ \

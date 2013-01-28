@@ -40,3 +40,11 @@ gboolean workman_init_check(int *argc,
 G_END_DECLS
 
 #endif /* __WORKMAN_MAIN_H__ */
+
+/*
+ * Local variables:
+ *  indent-tabs-mode: nil
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ */
