@@ -21,8 +21,12 @@ LIBworkman_0.0.1 {
         workman_process_get_type;
         workman_process_new;
 
+        workman_manager_add_partition;
         workman_manager_get_type;
+        workman_manager_get_consumers;
+        workman_manager_get_partitions;
         workman_manager_new;
+        workman_manager_remove_partition;
 
         workman_partition_get_consumers;
         workman_partition_get_subdivisions;

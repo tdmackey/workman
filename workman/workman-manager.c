@@ -24,7 +24,7 @@
 
 #include "workman.h"
 
-G_DEFINE_TYPE(WorkmanManager, workman_manager, G_TYPE_OBJECT);
+G_DEFINE_ABSTRACT_TYPE(WorkmanManager, workman_manager, G_TYPE_OBJECT);
 
 #define WORKMAN_MANAGER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE((obj), WORKMAN_TYPE_MANAGER, WorkmanManagerPrivate))
 
@@ -51,10 +51,69 @@ workman_manager_init(WorkmanManager *attr)
 }
 
 
-WorkmanManager *workman_manager_new(void)
+/**
+ * workman_manager_get_default:
+ *
+ * Returns: (transfer full): the default workload mnager object
+ */
+WorkmanManager *workman_manager_get_default(GError **error)
 {
-    return WORKMAN_MANAGER(g_object_new(WORKMAN_TYPE_MANAGER,
-                                        NULL));
+    /* XXX return an instance of WorkmanManagerLinux */
+    return NULL;
+}
+
+
+/**
+ * workman_manager_add_partition:
+ * @mgr: (transfer none): the manager object
+ * @parent: (transfer none)(allow-none): the parent of the new partition
+ * @state: the state to create the new partition in
+ *
+ * Returns: (transfer full): the new partition
+ */
+WorkmanPartition *workman_manager_add_partition(WorkmanManager *mgr,
+                                                WorkmanPartition *parent,
+                                                WorkmanState state,
+                                                GError **error)
+{
+    WorkmanManagerClass *klass = WORKMAN_MANAGER_GET_CLASS(mgr);
+    return klass->add_partition(mgr, parent, state, error);
+}
+
+gboolean workman_manager_remove_partition(WorkmanManager *mgr,
+                                          WorkmanState state,
+                                          GError **error)
+{
+    WorkmanManagerClass *klass = WORKMAN_MANAGER_GET_CLASS(mgr);
+    return klass->remove_partition(mgr, state, error);
+}
+
+
+/**
+ * workman_manager_get_partitions:
+ *
+ * Returns: (transfer full)(element-type WorkmanPartition): the list of partitions
+ */
+GList *workman_manager_get_partitions(WorkmanManager *mgr,
+                                      WorkmanState state,
+                                      GError **error)
+{
+    WorkmanManagerClass *klass = WORKMAN_MANAGER_GET_CLASS(mgr);
+    return klass->get_partitions(mgr, state, error);
+}
+
+
+/**
+ * workman_manager_get_consumers:
+ *
+ * Returns: (transfer full)(element-type WorkmanConsumer): the list of consumers
+ */
+GList *workman_manager_get_consumers(WorkmanManager *mgr,
+                                     WorkmanState state,
+                                     GError **error)
+{
+    WorkmanManagerClass *klass = WORKMAN_MANAGER_GET_CLASS(mgr);
+    return klass->get_consumers(mgr, state, error);
 }
 
 

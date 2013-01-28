@@ -60,13 +60,47 @@ struct _WorkmanManagerClass
 
     /* class members */
 
+    WorkmanPartition *(*add_partition)(WorkmanManager *mgr,
+                                       WorkmanPartition *parent,
+                                       WorkmanState state,
+                                       GError **error);
+
+    gboolean (*remove_partition)(WorkmanManager *mgr,
+                                 WorkmanState state,
+                                 GError **error);
+
+    GList *(*get_partitions)(WorkmanManager *mgr,
+                             WorkmanState state,
+                             GError **error);
+
+    GList *(*get_consumers)(WorkmanManager *mgr,
+                            WorkmanState state,
+                            GError **error);
+
     /* Remove from padding when adding new virtual functions */
     gpointer padding[20];
 };
 
 GType workman_manager_get_type(void);
 
-WorkmanManager *workman_manager_new(void);
+WorkmanManager *workman_manager_get_default(GError **error);
+
+WorkmanPartition *workman_manager_add_partition(WorkmanManager *mgr,
+                                                WorkmanPartition *parent,
+                                                WorkmanState state,
+                                                GError **error);
+
+gboolean workman_manager_remove_partition(WorkmanManager *mgr,
+                                          WorkmanState state,
+                                          GError **error);
+
+GList *workman_manager_get_partitions(WorkmanManager *mgr,
+                                      WorkmanState state,
+                                      GError **error);
+
+GList *workman_manager_get_consumers(WorkmanManager *mgr,
+                                     WorkmanState state,
+                                     GError **error);
 
 G_END_DECLS
 
