@@ -51,9 +51,9 @@ workman_consumer_init(WorkmanConsumer *attr)
 }
 
 gboolean workman_consumer_set_partition(WorkmanConsumer *consumer,
-					WorkmanState state,
-					WorkmanPartition *partition,
-					GError **error)
+                                        WorkmanState state,
+                                        WorkmanPartition *partition,
+                                        GError **error)
 {
     WorkmanConsumerClass *klass = WORKMAN_CONSUMER_GET_CLASS(consumer);
     return klass->set_partition(consumer, state, partition, error);
@@ -66,8 +66,8 @@ gboolean workman_consumer_set_partition(WorkmanConsumer *consumer,
  * Returns: (transfer full): the partition
  */
 WorkmanPartition *workman_consumer_get_partition(WorkmanConsumer *consumer,
-						 WorkmanState state,
-						 GError **error)
+                                                 WorkmanState state,
+                                                 GError **error)
 {
     WorkmanConsumerClass *klass = WORKMAN_CONSUMER_GET_CLASS(consumer);
     return klass->get_partition(consumer, state, error);
@@ -75,14 +75,14 @@ WorkmanPartition *workman_consumer_get_partition(WorkmanConsumer *consumer,
 
 
 gboolean workman_consumer_get_persistent(WorkmanConsumer *consumer,
-					 GError **error)
+                                         GError **error)
 {
     WorkmanConsumerClass *klass = WORKMAN_CONSUMER_GET_CLASS(consumer);
     return klass->get_persistent(consumer, error);
 }
 
 gboolean workman_consumer_get_active(WorkmanConsumer *consumer,
-				     GError **error)
+                                     GError **error)
 {
     WorkmanConsumerClass *klass = WORKMAN_CONSUMER_GET_CLASS(consumer);
     return klass->get_active(consumer, error);
@@ -95,7 +95,7 @@ gboolean workman_consumer_get_active(WorkmanConsumer *consumer,
  * Returns: (transfer full) (element-type WorkmanProcess): the partition
  */
 GList *workman_consumer_get_processes(WorkmanConsumer *consumer,
-				      GError **error)
+                                      GError **error)
 {
     WorkmanConsumerClass *klass = WORKMAN_CONSUMER_GET_CLASS(consumer);
     return klass->get_processes(consumer, error);

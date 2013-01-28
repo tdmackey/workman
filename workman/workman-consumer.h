@@ -31,12 +31,12 @@
 
 G_BEGIN_DECLS
 
-#define WORKMAN_TYPE_CONSUMER            (workman_consumer_get_type ())
-#define WORKMAN_CONSUMER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_CONSUMER, WorkmanConsumer))
-#define WORKMAN_IS_CONSUMER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_CONSUMER))
-#define WORKMAN_CONSUMER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_CONSUMER, WorkmanConsumerClass))
-#define WORKMAN_IS_CONSUMER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_CONSUMER))
-#define WORKMAN_CONSUMER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_CONSUMER, WorkmanConsumerClass))
+# define WORKMAN_TYPE_CONSUMER            (workman_consumer_get_type ())
+# define WORKMAN_CONSUMER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_CONSUMER, WorkmanConsumer))
+# define WORKMAN_IS_CONSUMER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_CONSUMER))
+# define WORKMAN_CONSUMER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_CONSUMER, WorkmanConsumerClass))
+# define WORKMAN_IS_CONSUMER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_CONSUMER))
+# define WORKMAN_CONSUMER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_CONSUMER, WorkmanConsumerClass))
 
 typedef struct _WorkmanConsumer        WorkmanConsumer;
 typedef struct _WorkmanConsumerClass   WorkmanConsumerClass;
@@ -82,21 +82,21 @@ struct _WorkmanConsumerClass
 GType workman_consumer_get_type(void);
 
 gboolean workman_consumer_set_partition(WorkmanConsumer *consumer,
-					WorkmanState state,
-					WorkmanPartition *partition,
-					GError **error);
+                                        WorkmanState state,
+                                        WorkmanPartition *partition,
+                                        GError **error);
 
 WorkmanPartition *workman_consumer_get_partition(WorkmanConsumer *consumer,
-						 WorkmanState state,
-						 GError **error);
+                                                 WorkmanState state,
+                                                 GError **error);
 
 gboolean workman_consumer_get_persistent(WorkmanConsumer *consumer,
-					 GError **error);
+                                         GError **error);
 gboolean workman_consumer_get_active(WorkmanConsumer *consumer,
-				     GError **error);
+                                     GError **error);
 
 GList *workman_consumer_get_processes(WorkmanConsumer *consumer,
-				      GError **error);
+                                      GError **error);
 
 G_END_DECLS
 

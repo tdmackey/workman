@@ -31,12 +31,12 @@
 
 G_BEGIN_DECLS
 
-#define WORKMAN_TYPE_OBJECT            (workman_object_get_type ())
-#define WORKMAN_OBJECT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_OBJECT, WorkmanObject))
-#define WORKMAN_IS_OBJECT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_OBJECT))
-#define WORKMAN_OBJECT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_OBJECT, WorkmanObjectClass))
-#define WORKMAN_IS_OBJECT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_OBJECT))
-#define WORKMAN_OBJECT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_OBJECT, WorkmanObjectClass))
+# define WORKMAN_TYPE_OBJECT            (workman_object_get_type ())
+# define WORKMAN_OBJECT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_OBJECT, WorkmanObject))
+# define WORKMAN_IS_OBJECT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_OBJECT))
+# define WORKMAN_OBJECT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_OBJECT, WorkmanObjectClass))
+# define WORKMAN_IS_OBJECT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_OBJECT))
+# define WORKMAN_OBJECT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_OBJECT, WorkmanObjectClass))
 
 typedef struct _WorkmanObject        WorkmanObject;
 typedef struct _WorkmanObjectClass   WorkmanObjectClass;
@@ -93,8 +93,8 @@ GList *workman_object_get_attributes(WorkmanObject *obj,
 
 WorkmanAttribute *workman_object_get_attribute(WorkmanObject *obj,
                                                WorkmanState state,
-					       const gchar *name,
-					       GError **error);
+                                               const gchar *name,
+                                               GError **error);
 
 gboolean workman_object_refresh_attributes(WorkmanObject *obj,
                                            WorkmanState state,

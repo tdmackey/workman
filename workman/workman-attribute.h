@@ -31,12 +31,12 @@
 
 G_BEGIN_DECLS
 
-#define WORKMAN_TYPE_ATTRIBUTE            (workman_attribute_get_type ())
-#define WORKMAN_ATTRIBUTE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_ATTRIBUTE, WorkmanAttribute))
-#define WORKMAN_IS_ATTRIBUTE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_ATTRIBUTE))
-#define WORKMAN_ATTRIBUTE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_ATTRIBUTE, WorkmanAttributeClass))
-#define WORKMAN_IS_ATTRIBUTE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_ATTRIBUTE))
-#define WORKMAN_ATTRIBUTE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_ATTRIBUTE, WorkmanAttributeClass))
+# define WORKMAN_TYPE_ATTRIBUTE            (workman_attribute_get_type ())
+# define WORKMAN_ATTRIBUTE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_ATTRIBUTE, WorkmanAttribute))
+# define WORKMAN_IS_ATTRIBUTE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_ATTRIBUTE))
+# define WORKMAN_ATTRIBUTE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_ATTRIBUTE, WorkmanAttributeClass))
+# define WORKMAN_IS_ATTRIBUTE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_ATTRIBUTE))
+# define WORKMAN_ATTRIBUTE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_ATTRIBUTE, WorkmanAttributeClass))
 
 typedef struct _WorkmanAttribute        WorkmanAttribute;
 typedef struct _WorkmanAttributeClass   WorkmanAttributeClass;

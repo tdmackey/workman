@@ -90,8 +90,8 @@ GList *workman_object_get_attributes(WorkmanObject *obj,
  */
 WorkmanAttribute *workman_object_get_attribute(WorkmanObject *obj,
                                                WorkmanState state,
-					       const gchar *name,
-					       GError **error)
+                                               const gchar *name,
+                                               GError **error)
 {
     WorkmanObjectClass *klass = WORKMAN_OBJECT_GET_CLASS(obj);
     return klass->get_attribute(obj, state, name, error);

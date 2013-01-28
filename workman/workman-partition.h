@@ -31,12 +31,12 @@
 
 G_BEGIN_DECLS
 
-#define WORKMAN_TYPE_PARTITION            (workman_partition_get_type ())
-#define WORKMAN_PARTITION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_PARTITION, WorkmanPartition))
-#define WORKMAN_IS_PARTITION(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_PARTITION))
-#define WORKMAN_PARTITION_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_PARTITION, WorkmanPartitionClass))
-#define WORKMAN_IS_PARTITION_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_PARTITION))
-#define WORKMAN_PARTITION_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_PARTITION, WorkmanPartitionClass))
+# define WORKMAN_TYPE_PARTITION            (workman_partition_get_type ())
+# define WORKMAN_PARTITION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_PARTITION, WorkmanPartition))
+# define WORKMAN_IS_PARTITION(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_PARTITION))
+# define WORKMAN_PARTITION_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_PARTITION, WorkmanPartitionClass))
+# define WORKMAN_IS_PARTITION_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_PARTITION))
+# define WORKMAN_PARTITION_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_PARTITION, WorkmanPartitionClass))
 
 typedef struct _WorkmanPartition        WorkmanPartition;
 typedef struct _WorkmanPartitionClass   WorkmanPartitionClass;

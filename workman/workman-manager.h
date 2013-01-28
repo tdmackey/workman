@@ -31,12 +31,12 @@
 
 G_BEGIN_DECLS
 
-#define WORKMAN_TYPE_MANAGER            (workman_manager_get_type ())
-#define WORKMAN_MANAGER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_MANAGER, WorkmanManager))
-#define WORKMAN_IS_MANAGER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_MANAGER))
-#define WORKMAN_MANAGER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_MANAGER, WorkmanManagerClass))
-#define WORKMAN_IS_MANAGER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_MANAGER))
-#define WORKMAN_MANAGER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_MANAGER, WorkmanManagerClass))
+# define WORKMAN_TYPE_MANAGER            (workman_manager_get_type ())
+# define WORKMAN_MANAGER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_MANAGER, WorkmanManager))
+# define WORKMAN_IS_MANAGER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_MANAGER))
+# define WORKMAN_MANAGER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_MANAGER, WorkmanManagerClass))
+# define WORKMAN_IS_MANAGER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_MANAGER))
+# define WORKMAN_MANAGER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_MANAGER, WorkmanManagerClass))
 
 typedef struct _WorkmanManager        WorkmanManager;
 typedef struct _WorkmanManagerClass   WorkmanManagerClass;

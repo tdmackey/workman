@@ -31,12 +31,12 @@
 
 G_BEGIN_DECLS
 
-#define WORKMAN_TYPE_PROCESS            (workman_process_get_type ())
-#define WORKMAN_PROCESS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_PROCESS, WorkmanProcess))
-#define WORKMAN_IS_PROCESS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_PROCESS))
-#define WORKMAN_PROCESS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_PROCESS, WorkmanProcessClass))
-#define WORKMAN_IS_PROCESS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_PROCESS))
-#define WORKMAN_PROCESS_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_PROCESS, WorkmanProcessClass))
+# define WORKMAN_TYPE_PROCESS            (workman_process_get_type ())
+# define WORKMAN_PROCESS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), WORKMAN_TYPE_PROCESS, WorkmanProcess))
+# define WORKMAN_IS_PROCESS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WORKMAN_TYPE_PROCESS))
+# define WORKMAN_PROCESS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), WORKMAN_TYPE_PROCESS, WorkmanProcessClass))
+# define WORKMAN_IS_PROCESS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), WORKMAN_TYPE_PROCESS))
+# define WORKMAN_PROCESS_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), WORKMAN_TYPE_PROCESS, WorkmanProcessClass))
 
 typedef struct _WorkmanProcess        WorkmanProcess;
 typedef struct _WorkmanProcessClass   WorkmanProcessClass;
@@ -67,7 +67,7 @@ struct _WorkmanProcessClass
 GType workman_process_get_type(void);
 
 WorkmanProcess *workman_process_new(const gchar *name,
-				    guint id);
+                                    guint id);
 
 const gchar *workman_process_get_name(WorkmanProcess *attr);
 guint workman_process_get_id(WorkmanProcess *attr);
