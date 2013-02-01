@@ -144,4 +144,6 @@ void workman_attribute_set_value(WorkmanAttribute *attr,
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
+ *
+ * vim: set expandtab shiftwidth=4 tabstop=4 :
  */

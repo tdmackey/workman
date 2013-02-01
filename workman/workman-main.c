@@ -154,4 +154,6 @@ gboolean workman_init_check(int *argc G_GNUC_UNUSED,
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
+ *
+ * vim: set expandtab shiftwidth=4 tabstop=4 :
  */

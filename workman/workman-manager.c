@@ -123,4 +123,6 @@ GList *workman_manager_get_consumers(WorkmanManager *mgr,
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
+ *
+ * vim: set expandtab shiftwidth=4 tabstop=4 :
  */

@@ -92,4 +92,6 @@ G_END_DECLS
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
+ *
+ * vim: set expandtab shiftwidth=4 tabstop=4 :
  */

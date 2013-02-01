@@ -61,3 +61,5 @@ docs/workman/*.types
 docs/workman/version.xml
 *.tar.gz
 *.pc
+*.swp
+cscope.*
