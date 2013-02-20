@@ -3,18 +3,9 @@
 
 The primary maintainers of libworkman are:
 
-   Christophe Fergeau <cfergeau@redhat.com>
    Daniel P. Berrange <berrange@redhat.com>
-   Marc-André Lureau <marcandre.lureau@redhat.com>
-   Zeeshan Ali (Khattak) <zeeshanak@gnome.org>
+   Josh Poimboeuf <jpoimboe@redhat.com>
 
 Patches have been received from:
-
-   Guido Günther <agx@sigxcpu.org>
-   Nirbheek Chauhan <nirbheek@gentoo.org>
-   Michal Privoznik <mprivozn@redhat.com>
-   Jovanka Gulicoska <jovanka.gulicoska@gmail.com>
-   Timo Juhani Lindfors <timo.lindfors@iki.fi>
-   Alexander Larsson <alexl@redhat.com>
 
    ... send patches to get your name added ...
