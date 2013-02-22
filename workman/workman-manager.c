@@ -82,10 +82,11 @@ WorkmanPartition *workman_manager_add_partition(WorkmanManager *mgr,
 
 gboolean workman_manager_remove_partition(WorkmanManager *mgr,
                                           WorkmanState state,
+                                          WorkmanPartition *partition,
                                           GError **error)
 {
     WorkmanManagerClass *klass = WORKMAN_MANAGER_GET_CLASS(mgr);
-    return klass->remove_partition(mgr, state, error);
+    return klass->remove_partition(mgr, state, partition, error);
 }
 
 

@@ -67,6 +67,7 @@ struct _WorkmanManagerClass
 
     gboolean (*remove_partition)(WorkmanManager *mgr,
                                  WorkmanState state,
+                                 WorkmanPartition *partition,
                                  GError **error);
 
     GList *(*get_partitions)(WorkmanManager *mgr,
@@ -93,6 +94,7 @@ WorkmanPartition *workman_manager_add_partition(WorkmanManager *mgr,
 
 gboolean workman_manager_remove_partition(WorkmanManager *mgr,
                                           WorkmanState state,
+                                          WorkmanPartition *partition,
                                           GError **error);
 
 GList *workman_manager_get_partitions(WorkmanManager *mgr,
