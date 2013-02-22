@@ -57,10 +57,11 @@ workman_partition_init(WorkmanPartition *attr)
  * Returns: (transfer full) (element-type WorkmanConsumer): the assigned consumers
  */
 GList *workman_partition_get_consumers(WorkmanPartition *partition,
+                                       WorkmanState state,
                                        GError **error)
 {
     WorkmanPartitionClass *klass = WORKMAN_PARTITION_GET_CLASS(partition);
-    return klass->get_consumers(partition, error);
+    return klass->get_consumers(partition, state, error);
 }
 
 
@@ -70,10 +71,11 @@ GList *workman_partition_get_consumers(WorkmanPartition *partition,
  * Returns: (transfer full) (element-type WorkmanPartition): the sub-divisons of this partition
  */
 GList *workman_partition_get_subdivisions(WorkmanPartition *partition,
+                                          WorkmanState state,
                                           GError **error)
 {
     WorkmanPartitionClass *klass = WORKMAN_PARTITION_GET_CLASS(partition);
-    return klass->get_subdivisions(partition, error);
+    return klass->get_subdivisions(partition, state, error);
 }
 
 

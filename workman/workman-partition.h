@@ -59,12 +59,18 @@ struct _WorkmanPartitionClass
     /*< private >*/
     WorkmanObjectClass parent_class;
 
-    GList *(*get_consumers)(WorkmanPartition *partition,
-                            GError **error);
-    GList *(*get_subdivisions)(WorkmanPartition *partition,
-                               GError **error);
 
     /* class members */
+    GList *(*get_consumers)(WorkmanPartition *partition,
+                            WorkmanState state,
+                            GError **error);
+
+    GList *(*get_subdivisions)(WorkmanPartition *partition,
+                               WorkmanState state,
+                               GError **error);
+
+
+    /* Remove from padding when adding new virtual functions */
     gpointer padding[20];
 };
 
@@ -72,9 +78,11 @@ struct _WorkmanPartitionClass
 GType workman_partition_get_type(void);
 
 GList *workman_partition_get_consumers(WorkmanPartition *partition,
+                                       WorkmanState state,
                                        GError **error);
 
 GList *workman_partition_get_subdivisions(WorkmanPartition *partition,
+                                          WorkmanState state,
                                           GError **error);
 
 G_END_DECLS
