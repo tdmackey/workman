@@ -74,21 +74,6 @@ WorkmanPartition *workman_consumer_get_partition(WorkmanConsumer *consumer,
 }
 
 
-gboolean workman_consumer_get_persistent(WorkmanConsumer *consumer,
-                                         GError **error)
-{
-    WorkmanConsumerClass *klass = WORKMAN_CONSUMER_GET_CLASS(consumer);
-    return klass->get_persistent(consumer, error);
-}
-
-gboolean workman_consumer_get_active(WorkmanConsumer *consumer,
-                                     GError **error)
-{
-    WorkmanConsumerClass *klass = WORKMAN_CONSUMER_GET_CLASS(consumer);
-    return klass->get_active(consumer, error);
-}
-
-
 /**
  * workman_consumer_get_processes:
  *

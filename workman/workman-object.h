@@ -64,6 +64,7 @@ struct _WorkmanObjectClass
     /*< private >*/
     GObjectClass parent_class;
 
+
     /* class members */
     GList *(*get_attributes)(WorkmanObject *obj,
                              WorkmanState state,
@@ -78,6 +79,10 @@ struct _WorkmanObjectClass
     gboolean (*save_attributes)(WorkmanObject *obj,
                                 WorkmanState state,
                                 GError **error);
+
+    WorkmanState (*get_state)(WorkmanObject *self,
+                              GError **error);
+
 
     /* Remove from padding when adding new virtual functions */
     gpointer padding[20];
@@ -103,6 +108,10 @@ gboolean workman_object_refresh_attributes(WorkmanObject *obj,
 gboolean workman_object_save_attributes(WorkmanObject *obj,
                                         WorkmanState state,
                                         GError **error);
+
+WorkmanState workman_object_get_state(WorkmanObject *obj,
+                                      GError **error);
+
 
 G_END_DECLS
 

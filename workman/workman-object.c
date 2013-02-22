@@ -115,6 +115,15 @@ gboolean workman_object_save_attributes(WorkmanObject *obj,
     return klass->save_attributes(obj, state, error);
 }
 
+
+WorkmanState workman_object_get_state(WorkmanObject *self,
+                                      GError **error)
+{
+    WorkmanObjectClass *obj_class = WORKMAN_OBJECT_GET_CLASS(self);
+    return obj_class->get_state(self, error);
+}
+
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

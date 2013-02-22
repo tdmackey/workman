@@ -8,6 +8,7 @@ LIBworkman_0.0.1 {
         workman_object_get_type;
         workman_object_refresh_attributes;
         workman_object_save_attributes;
+        workman_object_get_state;
 
         workman_attribute_get_name;
         workman_attribute_get_type;
@@ -32,9 +33,7 @@ LIBworkman_0.0.1 {
         workman_partition_get_subdivisions;
         workman_partition_get_type;
 
-        workman_consumer_get_active;
         workman_consumer_get_partition;
-        workman_consumer_get_persistent;
         workman_consumer_get_processes;
         workman_consumer_get_type;
         workman_consumer_set_partition;
