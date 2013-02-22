@@ -75,7 +75,7 @@
  * standard arguments.
  *
  * This method will also turn on debug logging of the library if the
- * <literal>workman_DEBUG</literal> environment variable is set.
+ * <literal>WORKMAN_DEBUG</literal> environment variable is set.
  *
  * This function will terminate your program if it was unable to initialize
  * for some reason. If you want the program to fall back to an alternate
