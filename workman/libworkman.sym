@@ -31,6 +31,8 @@ LIBworkman_0.0.1 {
 
         workman_partition_get_consumers;
         workman_partition_get_subpartitions;
+        workman_partition_get_parent;
+        workman_partition_set_parent;
         workman_partition_get_type;
 
         workman_consumer_get_partition;

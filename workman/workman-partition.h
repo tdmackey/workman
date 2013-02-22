@@ -69,6 +69,15 @@ struct _WorkmanPartitionClass
                                 WorkmanState state,
                                 GError **error);
 
+    WorkmanPartition *(*get_parent)(WorkmanPartition *partition,
+                                    WorkmanState state,
+                                    GError **error);
+
+    gboolean (*set_parent)(WorkmanPartition *partition,
+                           WorkmanState state,
+                           WorkmanPartition *parent,
+                           GError **error);
+
 
     /* Remove from padding when adding new virtual functions */
     gpointer padding[20];
@@ -84,6 +93,15 @@ GList *workman_partition_get_consumers(WorkmanPartition *partition,
 GList *workman_partition_get_subpartitions(WorkmanPartition *partition,
                                            WorkmanState state,
                                            GError **error);
+
+WorkmanPartition *workman_partition_get_parent(WorkmanPartition *partition,
+                                               WorkmanState state,
+                                               GError **error);
+
+gboolean workman_partition_set_parent(WorkmanPartition *partition,
+                                      WorkmanState state,
+                                      WorkmanPartition *parent,
+                                      GError **error);
 
 
 G_END_DECLS

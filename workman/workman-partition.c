@@ -79,6 +79,35 @@ GList *workman_partition_get_subpartitions(WorkmanPartition *partition,
 }
 
 
+/**
+ * workman_partition_get_parent:
+ *
+ * Returns: (transfer full): the parent partition
+ */
+WorkmanPartition *workman_partition_get_parent(WorkmanPartition *self,
+                                               WorkmanState state,
+                                               GError **error)
+{
+    WorkmanPartitionClass *klass = WORKMAN_PARTITION_GET_CLASS(self);
+    return klass->get_parent(self, state, error);
+}
+
+
+/**
+ * workman_partition_set_parent:
+ *
+ * Returns: TRUE on success
+ */
+gboolean workman_partition_set_parent(WorkmanPartition *self,
+                                      WorkmanState state,
+                                      WorkmanPartition *parent,
+                                      GError **error)
+{
+    WorkmanPartitionClass *klass = WORKMAN_PARTITION_GET_CLASS(self);
+    return klass->set_parent(self, state, parent, error);
+}
+
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil
