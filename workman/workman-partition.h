@@ -65,9 +65,9 @@ struct _WorkmanPartitionClass
                             WorkmanState state,
                             GError **error);
 
-    GList *(*get_subdivisions)(WorkmanPartition *partition,
-                               WorkmanState state,
-                               GError **error);
+    GList *(*get_subpartitions)(WorkmanPartition *partition,
+                                WorkmanState state,
+                                GError **error);
 
 
     /* Remove from padding when adding new virtual functions */
@@ -81,9 +81,10 @@ GList *workman_partition_get_consumers(WorkmanPartition *partition,
                                        WorkmanState state,
                                        GError **error);
 
-GList *workman_partition_get_subdivisions(WorkmanPartition *partition,
-                                          WorkmanState state,
-                                          GError **error);
+GList *workman_partition_get_subpartitions(WorkmanPartition *partition,
+                                           WorkmanState state,
+                                           GError **error);
+
 
 G_END_DECLS
 

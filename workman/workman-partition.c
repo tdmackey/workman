@@ -66,16 +66,16 @@ GList *workman_partition_get_consumers(WorkmanPartition *partition,
 
 
 /**
- * workman_partition_get_subdivisions:
+ * workman_partition_get_subpartitions:
  *
  * Returns: (transfer full) (element-type WorkmanPartition): the sub-divisons of this partition
  */
-GList *workman_partition_get_subdivisions(WorkmanPartition *partition,
-                                          WorkmanState state,
-                                          GError **error)
+GList *workman_partition_get_subpartitions(WorkmanPartition *partition,
+                                           WorkmanState state,
+                                           GError **error)
 {
     WorkmanPartitionClass *klass = WORKMAN_PARTITION_GET_CLASS(partition);
-    return klass->get_subdivisions(partition, state, error);
+    return klass->get_subpartitions(partition, state, error);
 }
 
 

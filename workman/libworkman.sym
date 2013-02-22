@@ -30,7 +30,7 @@ LIBworkman_0.0.1 {
         workman_manager_remove_partition;
 
         workman_partition_get_consumers;
-        workman_partition_get_subdivisions;
+        workman_partition_get_subpartitions;
         workman_partition_get_type;
 
         workman_consumer_get_partition;
