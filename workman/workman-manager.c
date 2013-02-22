@@ -66,18 +66,18 @@ WorkmanManager *workman_manager_get_default(GError **error)
 /**
  * workman_manager_add_partition:
  * @mgr: (transfer none): the manager object
- * @parent: (transfer none)(allow-none): the parent of the new partition
  * @state: the state to create the new partition in
+ * @parent: (transfer none)(allow-none): the parent of the new partition
  *
  * Returns: (transfer full): the new partition
  */
 WorkmanPartition *workman_manager_add_partition(WorkmanManager *mgr,
-                                                WorkmanPartition *parent,
                                                 WorkmanState state,
+                                                WorkmanPartition *parent,
                                                 GError **error)
 {
     WorkmanManagerClass *klass = WORKMAN_MANAGER_GET_CLASS(mgr);
-    return klass->add_partition(mgr, parent, state, error);
+    return klass->add_partition(mgr, state, parent, error);
 }
 
 gboolean workman_manager_remove_partition(WorkmanManager *mgr,
