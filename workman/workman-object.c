@@ -32,6 +32,7 @@ G_DEFINE_ABSTRACT_TYPE(WorkmanObject, workman_object, G_TYPE_OBJECT);
 struct _WorkmanObjectPrivate {
     gchar *name;
     WorkmanState state;
+    GList *attributes;
 };
 
 
@@ -39,7 +40,42 @@ enum {
     PROP_0,
     PROP_NAME,
     PROP_STATE,
+    PROP_ATTRIBUTES,
 };
+
+static void
+workman_object_attributes_free(GList *attributes)
+{
+    g_list_foreach(attributes, (GFunc)g_object_unref, NULL);
+    g_list_free(attributes);
+}
+
+
+static GList *
+workman_object_attributes_copy_filtered(GList *attributes,
+                                        WorkmanState state)
+{
+    GList *new_attrs, *a;
+
+    new_attrs = NULL;
+
+    for (a = attributes; a; a = a->next) {
+        WorkmanAttribute *attr = a->data;
+        if (workman_attribute_get_state(attr) & state) {
+            g_object_ref(attr);
+            new_attrs = g_list_append(new_attrs, attr);
+        }
+    }
+
+    return new_attrs;
+}
+
+static GList *
+workman_object_attributes_copy(GList *attributes)
+{
+    return workman_object_attributes_copy_filtered(attributes,
+                                                   WORKMAN_STATE_ALL);
+}
 
 
 static void
@@ -56,7 +92,10 @@ workman_object_get_property(GObject *object,
             g_value_set_string(value, self->priv->name);
             break;
         case PROP_STATE:
-            g_value_set_enum(value, self->priv->state);
+            g_value_set_flags(value, self->priv->state);
+            break;
+        case PROP_ATTRIBUTES:
+            g_value_set_boxed(value, self->priv->attributes);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -78,7 +117,11 @@ workman_object_set_property(GObject *object,
             self->priv->name = g_value_dup_string(value);
             break;
         case PROP_STATE:
-            self->priv->state = g_value_get_enum(value);
+            self->priv->state = g_value_get_flags(value);
+            break;
+        case PROP_ATTRIBUTES:
+            workman_object_attributes_free(self->priv->attributes);
+            self->priv->attributes = workman_object_attributes_copy(g_value_get_boxed(value));
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -87,10 +130,21 @@ workman_object_set_property(GObject *object,
 }
 
 
-void workman_object_finalize(GObject *object)
+static void
+workman_object_dispose(GObject *object)
 {
-    WorkmanObject *attr = WORKMAN_OBJECT(object);
-    WorkmanObjectPrivate *priv = attr->priv;
+    WorkmanObject *self = WORKMAN_OBJECT(object);
+
+    workman_object_attributes_free(self->priv->attributes);
+
+    G_OBJECT_CLASS(workman_object_parent_class)->dispose(object);
+}
+
+static void
+workman_object_finalize(GObject *object)
+{
+    WorkmanObject *obj = WORKMAN_OBJECT(object);
+    WorkmanObjectPrivate *priv = obj->priv;
 
     g_free(priv->name);
 
@@ -104,6 +158,7 @@ workman_object_class_init(WorkmanObjectClass *klass)
     GObjectClass *g_klass = G_OBJECT_CLASS(klass);
     GParamSpec *pspec;
 
+    g_klass->dispose = workman_object_dispose;
     g_klass->finalize = workman_object_finalize;
     g_klass->set_property = workman_object_set_property;
     g_klass->get_property = workman_object_get_property;
@@ -117,15 +172,32 @@ workman_object_class_init(WorkmanObjectClass *klass)
                                 G_PARAM_STATIC_STRINGS);
     g_object_class_install_property(g_klass, PROP_NAME, pspec);
 
-    pspec = g_param_spec_enum("state",
-                              "State",
-                              "The object's WorkmanState",
-                              WORKMAN_TYPE_STATE,
-                              0,
-                              G_PARAM_READWRITE |
-                              G_PARAM_CONSTRUCT_ONLY |
-                              G_PARAM_STATIC_STRINGS);
+    pspec = g_param_spec_flags("state",
+                               "State",
+                               "The object's WorkmanState",
+                               WORKMAN_TYPE_STATE,
+                               0,
+                               G_PARAM_READWRITE |
+                               G_PARAM_CONSTRUCT_ONLY |
+                               G_PARAM_STATIC_STRINGS);
     g_object_class_install_property(g_klass, PROP_STATE, pspec);
+
+
+    /**
+     * WorkmanObject:attributes:
+     *
+     * Type: GLib.List(WorkmanAttribute)
+     * Transfer: full
+     */
+    pspec = g_param_spec_boxed("attributes",
+                               "Attributes",
+                               "The object's list of WorkmanAttributes",
+                               WORKMAN_TYPE_ATTRIBUTE_LIST,
+                               G_PARAM_READWRITE |
+                               G_PARAM_CONSTRUCT_ONLY |
+                               G_PARAM_STATIC_STRINGS);
+
+    g_object_class_install_property(g_klass, PROP_ATTRIBUTES, pspec);
 
     g_type_class_add_private(klass, sizeof(WorkmanObjectPrivate));
 }
@@ -150,12 +222,12 @@ const gchar *workman_object_get_name(WorkmanObject *obj)
  *
  * Returns: (transfer full) (element-type WorkmanAttribute): the attributes for this object
  */
-GList *workman_object_get_attributes(WorkmanObject *obj,
+GList *workman_object_get_attributes(WorkmanObject *self,
                                      WorkmanState state,
                                      GError **error)
 {
-    WorkmanObjectClass *klass = WORKMAN_OBJECT_GET_CLASS(obj);
-    return klass->get_attributes(obj, state, error);
+    return workman_object_attributes_copy_filtered(self->priv->attributes,
+                                                   state);
 }
 
 
@@ -164,31 +236,38 @@ GList *workman_object_get_attributes(WorkmanObject *obj,
  *
  * Returns: (transfer full): the attribute or NULL
  */
-WorkmanAttribute *workman_object_get_attribute(WorkmanObject *obj,
+WorkmanAttribute *workman_object_get_attribute(WorkmanObject *self,
                                                WorkmanState state,
                                                const gchar *name,
                                                GError **error)
 {
-    WorkmanObjectClass *klass = WORKMAN_OBJECT_GET_CLASS(obj);
-    return klass->get_attribute(obj, state, name, error);
+    GList *a;
+    WorkmanAttribute *attr;
+
+    for (a = self->priv->attributes; a; a = a->next) {
+        attr = a->data;
+        if (workman_attribute_get_state(attr) == state &&
+            g_str_equal(workman_attribute_get_name(attr), name))
+            return g_object_ref(attr);
+    }
+
+    return NULL;
 }
 
 
-gboolean workman_object_refresh_attributes(WorkmanObject *obj,
+gboolean workman_object_refresh_attributes(WorkmanObject *self,
                                            WorkmanState state,
                                            GError **error)
 {
-    WorkmanObjectClass *klass = WORKMAN_OBJECT_GET_CLASS(obj);
-    return klass->refresh_attributes(obj, state, error);
+    /* TODO: call plugin->get_attributes and update obj->priv->attributes */
 }
 
 
-gboolean workman_object_save_attributes(WorkmanObject *obj,
+gboolean workman_object_save_attributes(WorkmanObject *self,
                                         WorkmanState state,
                                         GError **error)
 {
-    WorkmanObjectClass *klass = WORKMAN_OBJECT_GET_CLASS(obj);
-    return klass->save_attributes(obj, state, error);
+    /* TODO: call plugin->update_attribute for each changed attribute */
 }
 
 
@@ -198,6 +277,18 @@ WorkmanState workman_object_get_state(WorkmanObject *self,
     return self->priv->state;
 }
 
+
+GType workman_object_attribute_list_get_type(void)
+{
+    static GType type = 0;
+
+    if (type == 0)
+        type = g_boxed_type_register_static("WorkmanObjectAttributeList",
+                            (GBoxedCopyFunc) workman_object_attributes_copy,
+                            (GBoxedFreeFunc) workman_object_attributes_free);
+
+    return type;
+}
 
 /*
  * Local variables:

@@ -9,6 +9,7 @@ LIBworkman_0.0.1 {
         workman_object_refresh_attributes;
         workman_object_save_attributes;
         workman_object_get_state;
+        workman_object_attribute_list_get_type;
 
         workman_attribute_get_name;
         workman_attribute_get_type;

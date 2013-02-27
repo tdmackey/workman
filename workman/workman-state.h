@@ -31,9 +31,10 @@ G_BEGIN_DECLS
 
 
 typedef enum {
-    WORKMAN_STATE_ALL,
-    WORKMAN_STATE_ACTIVE,
-    WORKMAN_STATE_PERSISTENT,
+    WORKMAN_STATE_ACTIVE        = 1 << 0,
+    WORKMAN_STATE_PERSISTENT    = 1 << 1,
+    WORKMAN_STATE_ALL           = WORKMAN_STATE_ACTIVE |
+                                  WORKMAN_STATE_PERSISTENT,
 } WorkmanState;
 
 

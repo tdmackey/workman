@@ -59,22 +59,6 @@ struct _WorkmanObjectClass
     GObjectClass parent_class;
 
 
-    /* class members */
-    GList *(*get_attributes)(WorkmanObject *obj,
-                             WorkmanState state,
-                             GError **error);
-    WorkmanAttribute *(*get_attribute)(WorkmanObject *obj,
-                                       WorkmanState state,
-                                       const gchar *name,
-                                       GError **error);
-    gboolean (*refresh_attributes)(WorkmanObject *obj,
-                                   WorkmanState state,
-                                   GError **error);
-    gboolean (*save_attributes)(WorkmanObject *obj,
-                                WorkmanState state,
-                                GError **error);
-
-
     /* Remove from padding when adding new virtual functions */
     gpointer padding[20];
 };
@@ -103,6 +87,9 @@ gboolean workman_object_save_attributes(WorkmanObject *obj,
 WorkmanState workman_object_get_state(WorkmanObject *obj,
                                       GError **error);
 
+
+# define WORKMAN_TYPE_ATTRIBUTE_LIST    (workman_object_attribute_list_get_type())
+GType workman_object_attribute_list_get_type(void);
 
 G_END_DECLS
 
