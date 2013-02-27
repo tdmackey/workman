@@ -13,6 +13,7 @@ libworkman_1_0_la_HEADERS = \
 			workman-partition.h \
 			workman-consumer.h \
 			workman-manager.h \
+			workman-state.h \
                         $(NULL)
 libworkman_1_0_la_SOURCES = \
 			$(libworkman_1_0_la_HEADERS) \

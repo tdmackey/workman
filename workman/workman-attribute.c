@@ -34,6 +34,7 @@ struct _WorkmanAttributePrivate {
     gchar *format;
     GVariant *value;
     gboolean writable;
+    WorkmanState state;
 };
 
 
@@ -137,6 +138,18 @@ void workman_attribute_set_value(WorkmanAttribute *attr,
     if (attr->priv->value)
         g_variant_ref(attr->priv->value);
 }
+
+
+/**
+ * workman_attribute_get_state:
+ *
+ * Returns: the WorkmanState
+ */
+WorkmanState workman_attribute_get_state(WorkmanAttribute *self)
+{
+    return self->priv->state;
+}
+
 
 /*
  * Local variables:

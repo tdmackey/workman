@@ -42,12 +42,6 @@ typedef struct _WorkmanObject        WorkmanObject;
 typedef struct _WorkmanObjectClass   WorkmanObjectClass;
 typedef struct _WorkmanObjectPrivate WorkmanObjectPrivate;
 
-typedef enum {
-    WORKMAN_STATE_ALL,
-    WORKMAN_STATE_ACTIVE,
-    WORKMAN_STATE_PERSISTENT,
-} WorkmanState;
-
 struct _WorkmanObject
 {
     GObject parent_instance;

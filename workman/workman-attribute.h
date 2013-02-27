@@ -82,6 +82,8 @@ void workman_attribute_set_value(WorkmanAttribute *attr,
                                  GVariant *value,
                                  GError **error);
 
+WorkmanState workman_attribute_get_state(WorkmanAttribute *attr);
+
 G_END_DECLS
 
 #endif /* __WORKMAN_ATTRIBUTE_H__ */

@@ -1,5 +1,5 @@
 /*
- * workman.h: workload manager
+ * workman-state.h: workload manager
  *
  * Copyright (C) 2013 Red Hat, Inc.
  *
@@ -17,22 +17,30 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  *
- * Author: Daniel P. Berrange <berrange@redhat.com>
+ * Author: Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#ifndef __WORKMAN_H__
-# define __WORKMAN_H__
+#if !defined(__WORKMAN_H__) && !defined(WORKMAN_BUILD)
+# error "Only <workman/workman.h> can be included directly."
+#endif
 
-# include <workman/workman-main.h>
-# include <workman/workman-state.h>
-# include <workman/workman-attribute.h>
-# include <workman/workman-process.h>
-# include <workman/workman-object.h>
-# include <workman/workman-partition.h>
-# include <workman/workman-consumer.h>
-# include <workman/workman-manager.h>
+#ifndef __WORKMAN_STATE_H__
+# define __WORKMAN_STATE_H__
 
-#endif /* __WORKMAN_H__ */
+G_BEGIN_DECLS
+
+
+typedef enum {
+    WORKMAN_STATE_ALL,
+    WORKMAN_STATE_ACTIVE,
+    WORKMAN_STATE_PERSISTENT,
+} WorkmanState;
+
+
+G_END_DECLS
+
+#endif /* __WORKMAN_STATE_H__ */
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil
