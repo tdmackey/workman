@@ -33,6 +33,52 @@ struct _WorkmanObjectPrivate {
     gchar *name;
 };
 
+
+enum {
+    PROP_0,
+    PROP_NAME,
+};
+
+
+static void
+workman_object_get_property(GObject *object,
+                            guint prop_id,
+                            GValue *value,
+                            GParamSpec *pspec)
+{
+    WorkmanObject *self = WORKMAN_OBJECT(object);
+    GList *attributes;
+
+    switch (prop_id) {
+        case PROP_NAME:
+            g_value_set_string(value, self->priv->name);
+            break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+            break;
+    }
+}
+
+
+static void
+workman_object_set_property(GObject *object,
+                            guint prop_id,
+                            const GValue *value,
+                            GParamSpec *pspec)
+{
+    WorkmanObject *self = WORKMAN_OBJECT(object);
+
+    switch (prop_id) {
+        case PROP_NAME:
+            self->priv->name = g_value_dup_string(value);
+            break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+            break;
+    }
+}
+
+
 void workman_object_finalize(GObject *object)
 {
     WorkmanObject *attr = WORKMAN_OBJECT(object);
@@ -48,8 +94,21 @@ static void
 workman_object_class_init(WorkmanObjectClass *klass)
 {
     GObjectClass *g_klass = G_OBJECT_CLASS(klass);
+    GParamSpec *pspec;
 
     g_klass->finalize = workman_object_finalize;
+    g_klass->set_property = workman_object_set_property;
+    g_klass->get_property = workman_object_get_property;
+
+    pspec = g_param_spec_string("name",
+                                "Name",
+                                "The object name",
+                                NULL,
+                                G_PARAM_READWRITE |
+                                G_PARAM_CONSTRUCT_ONLY |
+                                G_PARAM_STATIC_STRINGS);
+    g_object_class_install_property(g_klass, PROP_NAME, pspec);
+
 
     g_type_class_add_private(klass, sizeof(WorkmanObjectPrivate));
 }
