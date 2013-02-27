@@ -74,9 +74,6 @@ struct _WorkmanObjectClass
                                 WorkmanState state,
                                 GError **error);
 
-    WorkmanState (*get_state)(WorkmanObject *self,
-                              GError **error);
-
 
     /* Remove from padding when adding new virtual functions */
     gpointer padding[20];

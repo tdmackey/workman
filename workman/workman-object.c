@@ -31,12 +31,14 @@ G_DEFINE_ABSTRACT_TYPE(WorkmanObject, workman_object, G_TYPE_OBJECT);
 
 struct _WorkmanObjectPrivate {
     gchar *name;
+    WorkmanState state;
 };
 
 
 enum {
     PROP_0,
     PROP_NAME,
+    PROP_STATE,
 };
 
 
@@ -52,6 +54,9 @@ workman_object_get_property(GObject *object,
     switch (prop_id) {
         case PROP_NAME:
             g_value_set_string(value, self->priv->name);
+            break;
+        case PROP_STATE:
+            g_value_set_enum(value, self->priv->state);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -71,6 +76,9 @@ workman_object_set_property(GObject *object,
     switch (prop_id) {
         case PROP_NAME:
             self->priv->name = g_value_dup_string(value);
+            break;
+        case PROP_STATE:
+            self->priv->state = g_value_get_enum(value);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -109,6 +117,15 @@ workman_object_class_init(WorkmanObjectClass *klass)
                                 G_PARAM_STATIC_STRINGS);
     g_object_class_install_property(g_klass, PROP_NAME, pspec);
 
+    pspec = g_param_spec_enum("state",
+                              "State",
+                              "The object's WorkmanState",
+                              WORKMAN_TYPE_STATE,
+                              0,
+                              G_PARAM_READWRITE |
+                              G_PARAM_CONSTRUCT_ONLY |
+                              G_PARAM_STATIC_STRINGS);
+    g_object_class_install_property(g_klass, PROP_STATE, pspec);
 
     g_type_class_add_private(klass, sizeof(WorkmanObjectPrivate));
 }
@@ -178,8 +195,7 @@ gboolean workman_object_save_attributes(WorkmanObject *obj,
 WorkmanState workman_object_get_state(WorkmanObject *self,
                                       GError **error)
 {
-    WorkmanObjectClass *obj_class = WORKMAN_OBJECT_GET_CLASS(self);
-    return obj_class->get_state(self, error);
+    return self->priv->state;
 }
 
 

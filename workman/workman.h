@@ -23,6 +23,7 @@
 #ifndef __WORKMAN_H__
 # define __WORKMAN_H__
 
+# include <workman/workman-enums.h>
 # include <workman/workman-main.h>
 # include <workman/workman-state.h>
 # include <workman/workman-attribute.h>

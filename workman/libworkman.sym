@@ -39,6 +39,8 @@ LIBworkman_0.0.1 {
         workman_consumer_get_processes;
         workman_consumer_get_type;
         workman_consumer_set_partition;
+
+        workman_state_get_type;
   local:
         *;
 };
