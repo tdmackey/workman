@@ -67,6 +67,7 @@ struct _WorkmanAttributeClass
 GType workman_attribute_get_type(void);
 
 WorkmanAttribute *workman_attribute_new(const gchar *name,
+                                        WorkmanState state,
                                         GVariant *value,
                                         gboolean writable);
 

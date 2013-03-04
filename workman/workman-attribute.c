@@ -37,16 +37,95 @@ struct _WorkmanAttributePrivate {
 };
 
 
-static void workman_attribute_finalize(GObject *object)
+enum {
+    PROP_0,
+    PROP_NAME,
+    PROP_VALUE,
+    PROP_WRITABLE,
+    PROP_STATE,
+};
+
+
+static void
+workman_attribute_dispose(GObject *object)
+{
+    WorkmanAttribute *self = WORKMAN_ATTRIBUTE(object);
+
+    g_variant_unref(self->priv->value);
+
+    G_OBJECT_CLASS(workman_attribute_parent_class)->dispose(object);
+}
+
+static void
+workman_attribute_finalize(GObject *object)
 {
     WorkmanAttribute *attr = WORKMAN_ATTRIBUTE(object);
     WorkmanAttributePrivate *priv = attr->priv;
 
     g_free(priv->name);
-    if (priv->value)
-        g_variant_unref(priv->value);
 
     G_OBJECT_CLASS(workman_attribute_parent_class)->finalize(object);
+}
+
+
+static void
+workman_attribute_get_property(GObject *object,
+                               guint prop_id,
+                               GValue *value,
+                               GParamSpec *pspec)
+{
+    WorkmanAttribute *self = WORKMAN_ATTRIBUTE(object);
+
+    switch (prop_id) {
+        case PROP_NAME:
+            g_value_set_string(value, self->priv->name);
+            break;
+        case PROP_VALUE:
+            g_value_set_variant(value, self->priv->value);
+            break;
+        case PROP_WRITABLE:
+            g_value_set_boolean(value, self->priv->writable);
+            break;
+        case PROP_STATE:
+            g_value_set_flags(value, self->priv->state);
+            break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+            break;
+    }
+}
+
+
+static void
+workman_attribute_set_property(GObject *object,
+                               guint prop_id,
+                               const GValue *value,
+                               GParamSpec *pspec)
+{
+    WorkmanAttribute *self = WORKMAN_ATTRIBUTE(object);
+    WorkmanState state;
+
+    switch (prop_id) {
+        case PROP_NAME:
+            self->priv->name = g_value_dup_string(value);
+            break;
+        case PROP_VALUE:
+            workman_attribute_set_value(self,
+                                        g_value_get_variant(value),
+                                        NULL);
+            break;
+        case PROP_WRITABLE:
+            self->priv->writable = g_value_get_boolean(value);
+            break;
+        case PROP_STATE:
+            state = g_value_get_flags(value);
+            g_return_if_fail(state != WORKMAN_STATE_ALL);
+            self->priv->state = state;
+            break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+            break;
+    }
 }
 
 
@@ -54,8 +133,50 @@ static void
 workman_attribute_class_init(WorkmanAttributeClass *klass)
 {
     GObjectClass *g_klass = G_OBJECT_CLASS(klass);
+    GParamSpec *pspec;
 
+    g_klass->dispose = workman_attribute_dispose;
     g_klass->finalize = workman_attribute_finalize;
+    g_klass->set_property = workman_attribute_set_property;
+    g_klass->get_property = workman_attribute_get_property;
+
+    pspec = g_param_spec_string("name",
+                                "Name",
+                                "The attribute name",
+                                NULL,
+                                G_PARAM_READWRITE |
+                                G_PARAM_CONSTRUCT_ONLY |
+                                G_PARAM_STATIC_STRINGS);
+    g_object_class_install_property(g_klass, PROP_NAME, pspec);
+
+    pspec = g_param_spec_variant("value",
+                                 "Value",
+                                 "The attribute value",
+                                 G_VARIANT_TYPE_MAYBE,
+                                 NULL,
+                                 G_PARAM_READWRITE |
+                                 G_PARAM_CONSTRUCT_ONLY |
+                                 G_PARAM_STATIC_STRINGS);
+    g_object_class_install_property(g_klass, PROP_VALUE, pspec);
+
+    pspec = g_param_spec_boolean("writable",
+                                 "Writable",
+                                 "Whether the attribute's value is writable",
+                                 FALSE,
+                                 G_PARAM_READWRITE |
+                                 G_PARAM_CONSTRUCT_ONLY |
+                                 G_PARAM_STATIC_STRINGS);
+    g_object_class_install_property(g_klass, PROP_WRITABLE, pspec);
+
+    pspec = g_param_spec_flags("state",
+                               "State",
+                               "The object's WorkmanState",
+                               WORKMAN_TYPE_STATE,
+                               0,
+                               G_PARAM_READWRITE |
+                               G_PARAM_CONSTRUCT_ONLY |
+                               G_PARAM_STATIC_STRINGS);
+    g_object_class_install_property(g_klass, PROP_STATE, pspec);
 
     g_type_class_add_private(klass, sizeof(WorkmanAttributePrivate));
 }
@@ -70,16 +191,19 @@ workman_attribute_init(WorkmanAttribute *attr)
 }
 
 WorkmanAttribute *workman_attribute_new(const gchar *name,
+                                        WorkmanState state,
                                         GVariant *value,
                                         gboolean writable)
 {
     g_return_val_if_fail(g_variant_is_of_type(value,G_VARIANT_TYPE_MAYBE),
                          NULL);
+    g_return_val_if_fail(state != WORKMAN_STATE_ALL, NULL);
 
     return WORKMAN_ATTRIBUTE(g_object_new(WORKMAN_TYPE_ATTRIBUTE,
                                           "name", name,
-                                          "writable", writable,
+                                          "state", state,
                                           "value", value,
+                                          "writable", writable,
                                           NULL));
 }
 
@@ -115,6 +239,14 @@ GVariant *workman_attribute_get_value(WorkmanAttribute *attr)
 }
 
 
+/**
+ * workman_attribute_set_value:
+ * @attr: a #WorkmanAttribute
+ * @value: (transfer floating): the attribute %G_VARIANT_TYPE_MAYBE value to set
+ * @error: (allow-none): return location for a #GError, or %NULL
+ *
+ * Returns: %TRUE if the operation succeeded
+ */
 gboolean
 workman_attribute_set_value(WorkmanAttribute *attr,
                             GVariant *value,
@@ -133,7 +265,7 @@ workman_attribute_set_value(WorkmanAttribute *attr,
     }
 
     attr->priv->value = value;
-    g_variant_ref(attr->priv->value);
+    g_variant_ref_sink(attr->priv->value);
 
     return TRUE;
 }
