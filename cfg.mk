@@ -129,3 +129,7 @@ sc_check_author_list:
 	test $$fail = 0
 
 exclude_file_name_regexp--sc_bindtextdomain = workman/workman-main\.c
+
+# Make an exception in the checking of makefile symbols enclosed within the '@'
+# character.  glib-mkenums requires the '@' variable syntax.
+_makefile_at_at_check_exceptions = ' && !/vhead|vprod/'
