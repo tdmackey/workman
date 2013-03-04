@@ -31,7 +31,6 @@ G_DEFINE_TYPE(WorkmanAttribute, workman_attribute, G_TYPE_OBJECT);
 
 struct _WorkmanAttributePrivate {
     gchar *name;
-    gchar *format;
     GVariant *value;
     gboolean writable;
     WorkmanState state;
@@ -44,7 +43,6 @@ static void workman_attribute_finalize(GObject *object)
     WorkmanAttributePrivate *priv = attr->priv;
 
     g_free(priv->name);
-    g_free(priv->format);
     if (priv->value)
         g_variant_unref(priv->value);
 
@@ -72,13 +70,14 @@ workman_attribute_init(WorkmanAttribute *attr)
 }
 
 WorkmanAttribute *workman_attribute_new(const gchar *name,
-                                        const gchar *format,
                                         GVariant *value,
                                         gboolean writable)
 {
+    g_return_val_if_fail(g_variant_is_of_type(value,G_VARIANT_TYPE_MAYBE),
+                         NULL);
+
     return WORKMAN_ATTRIBUTE(g_object_new(WORKMAN_TYPE_ATTRIBUTE,
                                           "name", name,
-                                          "format", format,
                                           "writable", writable,
                                           "value", value,
                                           NULL));
@@ -103,20 +102,9 @@ const gchar *workman_attribute_get_name(WorkmanAttribute *attr)
 
 
 /**
- * workman_attribute_get_format:
- *
- * Returns: (transfer none): the variant format string
- */
-const gchar *workman_attribute_get_format(WorkmanAttribute *attr)
-{
-    return attr->priv->format;
-}
-
-
-/**
  * workman_attribute_get_value:
  *
- * Returns: (transfer full): the attribute value
+ * Returns: (transfer full): the attribute %G_VARIANT_TYPE_MAYBE value
  */
 GVariant *workman_attribute_get_value(WorkmanAttribute *attr)
 {
@@ -127,16 +115,27 @@ GVariant *workman_attribute_get_value(WorkmanAttribute *attr)
 }
 
 
-void workman_attribute_set_value(WorkmanAttribute *attr,
-                                 GVariant *value,
-                                 GError **error)
+gboolean
+workman_attribute_set_value(WorkmanAttribute *attr,
+                            GVariant *value,
+                            GError **error)
 {
-    if (attr->priv->value)
+    g_return_val_if_fail(value != NULL, FALSE);
+
+    if (attr->priv->value) {
+        const GVariantType *old_type = g_variant_get_type(attr->priv->value);
+        const GVariantType *new_type = g_variant_get_type(value);
+
+        g_return_val_if_fail(g_variant_type_equal(old_type, new_type),
+                             FALSE);
+
         g_variant_unref(attr->priv->value);
-    /* XXX validate new value against priv->format */
+    }
+
     attr->priv->value = value;
-    if (attr->priv->value)
-        g_variant_ref(attr->priv->value);
+    g_variant_ref(attr->priv->value);
+
+    return TRUE;
 }
 
 

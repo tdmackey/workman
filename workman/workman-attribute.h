@@ -67,20 +67,17 @@ struct _WorkmanAttributeClass
 GType workman_attribute_get_type(void);
 
 WorkmanAttribute *workman_attribute_new(const gchar *name,
-                                        const gchar *format,
                                         GVariant *value,
                                         gboolean writable);
 
 gboolean workman_attribute_get_writable(WorkmanAttribute *attr);
 const gchar *workman_attribute_get_name(WorkmanAttribute *attr);
 
-const gchar *workman_attribute_get_format(WorkmanAttribute *attr);
-
 GVariant *workman_attribute_get_value(WorkmanAttribute *attr);
 
-void workman_attribute_set_value(WorkmanAttribute *attr,
-                                 GVariant *value,
-                                 GError **error);
+gboolean workman_attribute_set_value(WorkmanAttribute *attr,
+                                     GVariant *value,
+                                     GError **error);
 
 WorkmanState workman_attribute_get_state(WorkmanAttribute *attr);
 
