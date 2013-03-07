@@ -31,7 +31,7 @@ LIBworkman_0.0.1 {
         workman_manager_remove_partition;
 
         workman_partition_get_consumers;
-        workman_partition_get_subpartitions;
+        workman_partition_get_children;
         workman_partition_get_parent;
         workman_partition_set_parent;
         workman_partition_get_type;
@@ -42,6 +42,11 @@ LIBworkman_0.0.1 {
         workman_consumer_set_partition;
 
         workman_state_get_type;
+
+        workman_attribute_list_get_type;
+        workman_partition_list_get_type;
+        workman_consumer_list_get_type;
+
   local:
         *;
 };

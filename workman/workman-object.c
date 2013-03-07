@@ -43,39 +43,6 @@ enum {
     PROP_ATTRIBUTES,
 };
 
-static void
-workman_object_attributes_free(GList *attributes)
-{
-    g_list_foreach(attributes, (GFunc)g_object_unref, NULL);
-    g_list_free(attributes);
-}
-
-
-static GList *
-workman_object_attributes_copy_filtered(GList *attributes,
-                                        WorkmanState state)
-{
-    GList *new_attrs, *a;
-
-    new_attrs = NULL;
-
-    for (a = attributes; a; a = a->next) {
-        WorkmanAttribute *attr = a->data;
-        if (workman_attribute_get_state(attr) & state) {
-            g_object_ref(attr);
-            new_attrs = g_list_append(new_attrs, attr);
-        }
-    }
-
-    return new_attrs;
-}
-
-static GList *
-workman_object_attributes_copy(GList *attributes)
-{
-    return workman_object_attributes_copy_filtered(attributes,
-                                                   WORKMAN_STATE_ALL);
-}
 
 
 static void
@@ -120,8 +87,8 @@ workman_object_set_property(GObject *object,
             self->priv->state = g_value_get_flags(value);
             break;
         case PROP_ATTRIBUTES:
-            workman_object_attributes_free(self->priv->attributes);
-            self->priv->attributes = workman_object_attributes_copy(g_value_get_boxed(value));
+            g_boxed_free(WORKMAN_TYPE_ATTRIBUTE_LIST, self->priv->attributes);
+            self->priv->attributes = g_value_dup_boxed(value);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -135,7 +102,7 @@ workman_object_dispose(GObject *object)
 {
     WorkmanObject *self = WORKMAN_OBJECT(object);
 
-    workman_object_attributes_free(self->priv->attributes);
+    g_boxed_free(WORKMAN_TYPE_ATTRIBUTE_LIST, self->priv->attributes);
 
     G_OBJECT_CLASS(workman_object_parent_class)->dispose(object);
 }
@@ -226,8 +193,19 @@ GList *workman_object_get_attributes(WorkmanObject *self,
                                      WorkmanState state,
                                      GError **error)
 {
-    return workman_object_attributes_copy_filtered(self->priv->attributes,
-                                                   state);
+    GList *new_attrs, *a;
+
+    new_attrs = NULL;
+
+    for (a = self->priv->attributes; a; a = a->next) {
+        WorkmanAttribute *attr = WORKMAN_ATTRIBUTE(a->data);
+        if (workman_attribute_get_state(attr) & state) {
+            g_object_ref(attr);
+            new_attrs = g_list_append(new_attrs, attr);
+        }
+    }
+
+    return new_attrs;
 }
 
 
@@ -277,18 +255,6 @@ WorkmanState workman_object_get_state(WorkmanObject *self,
     return self->priv->state;
 }
 
-
-GType workman_object_attribute_list_get_type(void)
-{
-    static GType type = 0;
-
-    if (type == 0)
-        type = g_boxed_type_register_static("WorkmanObjectAttributeList",
-                            (GBoxedCopyFunc) workman_object_attributes_copy,
-                            (GBoxedFreeFunc) workman_object_attributes_free);
-
-    return type;
-}
 
 /*
  * Local variables:

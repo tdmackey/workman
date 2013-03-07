@@ -1,5 +1,5 @@
 /*
- * workman.h: workload manager
+ * workman-lists-c: workload manager
  *
  * Copyright (C) 2013 Red Hat, Inc.
  *
@@ -17,24 +17,48 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  *
- * Author: Daniel P. Berrange <berrange@redhat.com>
+ * Author: Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#ifndef __WORKMAN_H__
-# define __WORKMAN_H__
+#include <config.h>
 
-# include <workman/workman-enums.h>
-# include <workman/workman-main.h>
-# include <workman/workman-state.h>
-# include <workman/workman-attribute.h>
-# include <workman/workman-process.h>
-# include <workman/workman-object.h>
-# include <workman/workman-partition.h>
-# include <workman/workman-consumer.h>
-# include <workman/workman-manager.h>
-# include <workman/workman-lists.h>
+#include "workman.h"
 
-#endif /* __WORKMAN_H__ */
+
+static GList *
+list_copy(GList *list)
+{
+    g_list_foreach(list, (GFunc)g_object_ref, NULL);
+    return g_list_copy(list);
+}
+
+
+static void
+list_free(GList *list)
+{
+    g_list_foreach(list, (GFunc)g_object_unref, NULL);
+    g_list_free(list);
+}
+
+
+typedef GList WorkmanAttributeList;
+G_DEFINE_BOXED_TYPE(WorkmanAttributeList,
+                    workman_attribute_list,
+                    list_copy,
+                    list_free);
+
+typedef GList WorkmanPartitionList;
+G_DEFINE_BOXED_TYPE(WorkmanPartitionList,
+                    workman_partition_list,
+                    list_copy,
+                    list_free);
+
+typedef GList WorkmanConsumerList;
+G_DEFINE_BOXED_TYPE(WorkmanConsumerList,
+                    workman_consumer_list,
+                    list_copy,
+                    list_free);
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

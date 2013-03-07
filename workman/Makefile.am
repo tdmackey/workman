@@ -17,6 +17,7 @@ libworkman_1_0_la_HEADERS = \
 			workman-consumer.h \
 			workman-manager.h \
 			workman-state.h \
+			workman-lists.h \
                         $(NULL)
 libworkman_1_0_la_SOURCES = \
 			$(libworkman_1_0_la_HEADERS) \
@@ -28,6 +29,7 @@ libworkman_1_0_la_SOURCES = \
 			workman-partition.c \
 			workman-consumer.c \
 			workman-manager.c \
+			workman-lists.c \
                         $(NULL)
 libworkman_1_0_la_CFLAGS = \
 			-DWORKMAN_BUILD \

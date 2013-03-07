@@ -88,9 +88,6 @@ WorkmanState workman_object_get_state(WorkmanObject *obj,
                                       GError **error);
 
 
-# define WORKMAN_TYPE_ATTRIBUTE_LIST    (workman_object_attribute_list_get_type())
-GType workman_object_attribute_list_get_type(void);
-
 G_END_DECLS
 
 #endif /* __WORKMAN_OBJECT_H__ */
