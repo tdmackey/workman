@@ -47,21 +47,12 @@ enum {
 
 
 static void
-workman_attribute_dispose(GObject *object)
-{
-    WorkmanAttribute *self = WORKMAN_ATTRIBUTE(object);
-
-    g_variant_unref(self->priv->value);
-
-    G_OBJECT_CLASS(workman_attribute_parent_class)->dispose(object);
-}
-
-static void
 workman_attribute_finalize(GObject *object)
 {
     WorkmanAttribute *attr = WORKMAN_ATTRIBUTE(object);
     WorkmanAttributePrivate *priv = attr->priv;
 
+    g_variant_unref(priv->value);
     g_free(priv->name);
 
     G_OBJECT_CLASS(workman_attribute_parent_class)->finalize(object);
@@ -135,7 +126,6 @@ workman_attribute_class_init(WorkmanAttributeClass *klass)
     GObjectClass *g_klass = G_OBJECT_CLASS(klass);
     GParamSpec *pspec;
 
-    g_klass->dispose = workman_attribute_dispose;
     g_klass->finalize = workman_attribute_finalize;
     g_klass->set_property = workman_attribute_set_property;
     g_klass->get_property = workman_attribute_get_property;
