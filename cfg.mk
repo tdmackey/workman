@@ -73,8 +73,8 @@ bracket-spacing-check:
 	$(PERL) $(top_srcdir)/build-aux/bracket-spacing.pl $$files || \
 	  (echo $(ME): incorrect whitespace around brackets, see HACKING for rules && exit 1)
 
-# Ensure that no C source file uses TABs for indentation.
-space_indent_files=(\.[ch])
+# Ensure that no C source or .sym file uses TABs for indentation.
+space_indent_files=(\.([ch]|sym))
 sc_TAB_in_indentation:
 	@prohibit='^ *	'						\
 	in_vc_files='$(space_indent_files)$$'				\
