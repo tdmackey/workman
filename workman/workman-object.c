@@ -103,6 +103,7 @@ workman_object_dispose(GObject *object)
     WorkmanObject *self = WORKMAN_OBJECT(object);
 
     g_boxed_free(WORKMAN_TYPE_ATTRIBUTE_LIST, self->priv->attributes);
+    self->priv->attributes = NULL;
 
     G_OBJECT_CLASS(workman_object_parent_class)->dispose(object);
 }
