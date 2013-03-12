@@ -60,21 +60,6 @@ struct _WorkmanConsumerClass
     WorkmanObjectClass parent_class;
 
 
-    /* class members */
-    WorkmanPartition *(*get_partition)(WorkmanConsumer *consumer,
-                                       WorkmanState state,
-                                       GError **error);
-    gboolean (*set_partition)(WorkmanConsumer *consumer,
-                              WorkmanState state,
-                              WorkmanPartition *partition,
-                              GError **error);
-    gboolean (*get_persistent)(WorkmanConsumer *consumer,
-                               GError **error);
-
-    GList *(*get_processes)(WorkmanConsumer *consumer,
-                            GError **error);
-
-
     /* Remove from padding when adding new virtual functions */
     gpointer padding[20];
 };
@@ -93,6 +78,9 @@ WorkmanPartition *workman_consumer_get_partition(WorkmanConsumer *consumer,
 
 GList *workman_consumer_get_processes(WorkmanConsumer *consumer,
                                       GError **error);
+
+gboolean workman_consumer_refresh_processes(WorkmanConsumer *consumer,
+                                            GError **error);
 
 G_END_DECLS
 
