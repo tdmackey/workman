@@ -46,6 +46,7 @@ LIBworkman_0.0.1 {
         workman_attribute_list_get_type;
         workman_partition_list_get_type;
         workman_consumer_list_get_type;
+        workman_process_list_get_type;
 
   local:
         *;
