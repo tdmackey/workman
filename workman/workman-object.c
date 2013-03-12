@@ -224,9 +224,9 @@ WorkmanAttribute *workman_object_get_attribute(WorkmanObject *self,
     WorkmanAttribute *attr;
 
     for (a = self->priv->attributes; a; a = a->next) {
-        attr = a->data;
+        attr = WORKMAN_ATTRIBUTE(a->data);
         if (workman_attribute_get_state(attr) == state &&
-            g_str_equal(workman_attribute_get_name(attr), name))
+            !g_strcmp0(workman_attribute_get_name(attr), name))
             return g_object_ref(attr);
     }
 
