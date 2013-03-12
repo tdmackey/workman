@@ -38,6 +38,10 @@ GType workman_partition_list_get_type(void) G_GNUC_CONST;
 GType workman_consumer_list_get_type(void) G_GNUC_CONST;
 
 
+GList *workman_list_merge(GList *list_active,
+                          GList *list_persistent,
+                          WorkmanState state);
+
 G_END_DECLS
 
 #endif /* __WORKMAN_LISTS_H__ */

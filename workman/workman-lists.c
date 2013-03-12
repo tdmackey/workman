@@ -59,6 +59,37 @@ G_DEFINE_BOXED_TYPE(WorkmanConsumerList,
                     list_copy,
                     list_free);
 
+
+/**
+ * workman_list_merge:
+ * @list_active: (element-type WorkmanObject):
+ * @list_persistent: (element-type WorkmanObject):
+ *
+ * Returns: (transfer full) (element-type WorkmanObject): a combined list with duplicates removed
+ */
+GList *
+workman_list_merge(GList *list_active,
+                   GList *list_persistent,
+                   WorkmanState state)
+{
+    GList *list = NULL;
+
+    if (state & WORKMAN_STATE_ACTIVE)
+        list = g_list_copy(list_active);
+
+    if (state & WORKMAN_STATE_PERSISTENT) {
+        GList *l;
+
+        for (l = list_persistent; l; l = l->next)
+            if (!g_list_find(list, l->data))
+                list = g_list_append(list, l->data);
+    }
+
+    g_list_foreach(list, (GFunc)g_object_ref, NULL);
+
+    return list;
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

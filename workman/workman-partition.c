@@ -30,17 +30,23 @@ G_DEFINE_TYPE(WorkmanPartition, workman_partition, WORKMAN_TYPE_OBJECT);
 
 
 struct _WorkmanPartitionPrivate {
-    WorkmanPartition *parent;
-    GList *children;
-    GList *consumers;
+    WorkmanPartition *parent_active;
+    WorkmanPartition *parent_persistent;
+    GList *children_active;
+    GList *children_persistent;
+    GList *consumers_active;
+    GList *consumers_persistent;
 };
 
 
 enum {
     PROP_0,
-    PROP_PARENT,
-    PROP_CHILDREN,
-    PROP_CONSUMERS,
+    PROP_PARENT_ACTIVE,
+    PROP_PARENT_PERSISTENT,
+    PROP_CHILDREN_ACTIVE,
+    PROP_CHILDREN_PERSISTENT,
+    PROP_CONSUMERS_ACTIVE,
+    PROP_CONSUMERS_PERSISTENT,
 };
 
 
@@ -49,11 +55,23 @@ workman_partition_dispose(GObject *object)
 {
     WorkmanPartition *self = WORKMAN_PARTITION(self);
 
-    g_boxed_free(WORKMAN_TYPE_PARTITION_LIST, self->priv->children);
-    self->priv->children = NULL;
+    g_boxed_free(WORKMAN_TYPE_PARTITION_LIST, self->priv->children_active);
+    self->priv->children_active = NULL;
 
-    g_boxed_free(WORKMAN_TYPE_CONSUMER_LIST, self->priv->consumers);
-    self->priv->consumers = NULL;
+    g_boxed_free(WORKMAN_TYPE_PARTITION_LIST, self->priv->children_persistent);
+    self->priv->children_persistent = NULL;
+
+    g_boxed_free(WORKMAN_TYPE_CONSUMER_LIST, self->priv->consumers_active);
+    self->priv->consumers_active = NULL;
+
+    g_boxed_free(WORKMAN_TYPE_CONSUMER_LIST, self->priv->consumers_persistent);
+    self->priv->consumers_persistent = NULL;
+
+    g_object_unref(self->priv->parent_active);
+    self->priv->parent_active = NULL;
+
+    g_object_unref(self->priv->parent_persistent);
+    self->priv->parent_persistent = NULL;
 
     G_OBJECT_CLASS(workman_partition_parent_class)->dispose(object);
 }
@@ -68,14 +86,23 @@ workman_partition_get_property(GObject *object,
     WorkmanPartition *self = WORKMAN_PARTITION(object);
 
     switch (prop_id) {
-        case PROP_PARENT:
-            g_value_set_object(value, self->priv->parent);
+        case PROP_PARENT_ACTIVE:
+            g_value_set_object(value, self->priv->parent_active);
             break;
-        case PROP_CHILDREN:
-            g_value_set_boxed(value, self->priv->children);
+        case PROP_PARENT_PERSISTENT:
+            g_value_set_object(value, self->priv->parent_persistent);
             break;
-        case PROP_CONSUMERS:
-            g_value_set_boxed(value, self->priv->consumers);
+        case PROP_CHILDREN_ACTIVE:
+            g_value_set_boxed(value, self->priv->children_active);
+            break;
+        case PROP_CHILDREN_PERSISTENT:
+            g_value_set_boxed(value, self->priv->children_persistent);
+            break;
+        case PROP_CONSUMERS_ACTIVE:
+            g_value_set_boxed(value, self->priv->consumers_active);
+            break;
+        case PROP_CONSUMERS_PERSISTENT:
+            g_value_set_boxed(value, self->priv->consumers_persistent);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -93,17 +120,33 @@ workman_partition_set_property(GObject *object,
     WorkmanPartition *self = WORKMAN_PARTITION(object);
 
     switch (prop_id) {
-        case PROP_PARENT:
-            g_object_unref(self->priv->parent);
-            self->priv->parent = g_value_dup_object(value);
+        case PROP_PARENT_ACTIVE:
+            g_object_unref(self->priv->parent_active);
+            self->priv->parent_active = g_value_dup_object(value);
             break;
-        case PROP_CHILDREN:
-            g_boxed_free(WORKMAN_TYPE_PARTITION_LIST, self->priv->children);
-            self->priv->children = g_value_dup_boxed(value);
+        case PROP_PARENT_PERSISTENT:
+            g_object_unref(self->priv->parent_persistent);
+            self->priv->parent_persistent = g_value_dup_object(value);
             break;
-        case PROP_CONSUMERS:
-            g_boxed_free(WORKMAN_TYPE_CONSUMER_LIST, self->priv->consumers);
-            self->priv->consumers = g_value_dup_boxed(value);
+        case PROP_CHILDREN_ACTIVE:
+            g_boxed_free(WORKMAN_TYPE_PARTITION_LIST,
+                         self->priv->children_active);
+            self->priv->children_active = g_value_dup_boxed(value);
+            break;
+        case PROP_CHILDREN_PERSISTENT:
+            g_boxed_free(WORKMAN_TYPE_PARTITION_LIST,
+                         self->priv->children_persistent);
+            self->priv->children_persistent = g_value_dup_boxed(value);
+            break;
+        case PROP_CONSUMERS_ACTIVE:
+            g_boxed_free(WORKMAN_TYPE_CONSUMER_LIST,
+                         self->priv->consumers_active);
+            self->priv->consumers_active = g_value_dup_boxed(value);
+            break;
+        case PROP_CONSUMERS_PERSISTENT:
+            g_boxed_free(WORKMAN_TYPE_CONSUMER_LIST,
+                         self->priv->consumers_persistent);
+            self->priv->consumers_persistent = g_value_dup_boxed(value);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -122,45 +165,86 @@ workman_partition_class_init(WorkmanPartitionClass *klass)
     g_klass->set_property = workman_partition_set_property;
     g_klass->get_property = workman_partition_get_property;
 
-    pspec = g_param_spec_object("parent",
-                                "Parent",
-                                "The partition's parent partition",
+    pspec = g_param_spec_object("parent-active",
+                                "Active Parent",
+                                "The partition's parent partition in the active state",
                                 WORKMAN_TYPE_PARTITION,
                                 G_PARAM_READWRITE |
+                                G_PARAM_CONSTRUCT_ONLY |
                                 G_PARAM_STATIC_STRINGS);
-    g_object_class_install_property(g_klass, PROP_PARENT, pspec);
+    g_object_class_install_property(g_klass, PROP_PARENT_ACTIVE, pspec);
+
+    pspec = g_param_spec_object("parent-persistent",
+                                "Persistent Parent",
+                                "The partition's parent partition in the persistent state",
+                                WORKMAN_TYPE_PARTITION,
+                                G_PARAM_READWRITE |
+                                G_PARAM_CONSTRUCT_ONLY |
+                                G_PARAM_STATIC_STRINGS);
+    g_object_class_install_property(g_klass, PROP_PARENT_PERSISTENT, pspec);
 
 
     /**
-     * WorkmanPartition:children:
+     * WorkmanPartition:children-active:
      *
      * Type: GLib.List(WorkmanPartition)
      * Transfer: full
      */
-    pspec = g_param_spec_boxed("children",
-                               "Children",
-                               "The partition's list of children partitions",
+    pspec = g_param_spec_boxed("children-active",
+                               "Active Children",
+                               "The partition's list of children partitions in the active state",
                                WORKMAN_TYPE_PARTITION_LIST,
                                G_PARAM_READWRITE |
                                G_PARAM_CONSTRUCT_ONLY |
                                G_PARAM_STATIC_STRINGS);
-    g_object_class_install_property(g_klass, PROP_CHILDREN, pspec);
+    g_object_class_install_property(g_klass, PROP_CHILDREN_ACTIVE, pspec);
+
+    /**
+     * WorkmanPartition:children-persistent:
+     *
+     * Type: GLib.List(WorkmanPartition)
+     * Transfer: full
+     */
+    pspec = g_param_spec_boxed("children-persistent",
+                               "Persistent Children",
+                               "The partition's list of children partitions in the persistent state",
+                               WORKMAN_TYPE_PARTITION_LIST,
+                               G_PARAM_READWRITE |
+                               G_PARAM_CONSTRUCT_ONLY |
+                               G_PARAM_STATIC_STRINGS);
+    g_object_class_install_property(g_klass, PROP_CHILDREN_PERSISTENT, pspec);
 
 
     /**
-     * WorkmanPartition:consumers:
+     * WorkmanPartition:consumers-active:
      *
      * Type: GLib.List(WorkmanConsumer)
      * Transfer: full
      */
-    pspec = g_param_spec_boxed("consumers",
-                               "Consumers",
-                               "The partition's list of consumers",
+    pspec = g_param_spec_boxed("consumers-active",
+                               "Active Consumers",
+                               "The partition's list of consumers in the active state",
                                WORKMAN_TYPE_CONSUMER_LIST,
                                G_PARAM_READWRITE |
                                G_PARAM_CONSTRUCT_ONLY |
                                G_PARAM_STATIC_STRINGS);
-    g_object_class_install_property(g_klass, PROP_CONSUMERS, pspec);
+    g_object_class_install_property(g_klass, PROP_CONSUMERS_ACTIVE, pspec);
+
+
+    /**
+     * WorkmanPartition:consumers-persistent:
+     *
+     * Type: GLib.List(WorkmanConsumer)
+     * Transfer: full
+     */
+    pspec = g_param_spec_boxed("consumers-persistent",
+                               "Persistent Consumers",
+                               "The partition's list of consumers in the persistent state",
+                               WORKMAN_TYPE_CONSUMER_LIST,
+                               G_PARAM_READWRITE |
+                               G_PARAM_CONSTRUCT_ONLY |
+                               G_PARAM_STATIC_STRINGS);
+    g_object_class_install_property(g_klass, PROP_CONSUMERS_PERSISTENT, pspec);
 
     g_type_class_add_private(klass, sizeof(WorkmanPartitionPrivate));
 }
@@ -175,25 +259,6 @@ workman_partition_init(WorkmanPartition *attr)
 }
 
 
-static GList *
-workman_partition_copy_objects(GList *list,
-                               WorkmanState state,
-                               GError **error)
-{
-    GList *new_list, *l;
-
-    for (new_list = NULL, l = list; l; l = l->next) {
-        WorkmanObject *obj = WORKMAN_OBJECT(l->data);
-        if (workman_object_get_state(obj, NULL) & state) {
-            g_object_ref(obj);
-            new_list = g_list_append(new_list, obj);
-        }
-    }
-
-    return new_list;
-}
-
-
 /**
  * workman_partition_get_consumers:
  *
@@ -204,7 +269,9 @@ workman_partition_get_consumers(WorkmanPartition *self,
                                 WorkmanState state,
                                 GError **error)
 {
-    return workman_partition_copy_objects(self->priv->consumers, state, error);
+    return workman_list_merge(self->priv->consumers_active,
+                              self->priv->consumers_persistent,
+                              state);
 }
 
 
@@ -218,7 +285,9 @@ workman_partition_get_children(WorkmanPartition *self,
                                WorkmanState state,
                                GError **error)
 {
-    return workman_partition_copy_objects(self->priv->children, state, error);
+    return workman_list_merge(self->priv->children_active,
+                              self->priv->children_persistent,
+                              state);
 }
 
 
@@ -232,7 +301,13 @@ workman_partition_get_parent(WorkmanPartition *self,
                              WorkmanState state,
                              GError **error)
 {
-    return g_object_ref(self->priv->parent);
+    if (state == WORKMAN_STATE_ACTIVE)
+        return g_object_ref(self->priv->parent_active);
+
+    if (state == WORKMAN_STATE_PERSISTENT)
+        return g_object_ref(self->priv->parent_persistent);
+
+    return NULL;
 }
 
 
@@ -254,50 +329,121 @@ workman_partition_set_parent(WorkmanPartition *self,
 
 gboolean
 workman_partition_add_consumer(WorkmanPartition *self,
+                               WorkmanState state,
                                WorkmanConsumer *consumer)
 {
-    g_object_ref(consumer);
-    self->priv->consumers = g_list_append(self->priv->consumers, consumer);
-    return TRUE;
+    WorkmanPartitionPrivate *priv = self->priv;
+    gboolean ret = FALSE;
+    WorkmanState obj_state;
+
+    obj_state = workman_object_get_state(WORKMAN_OBJECT(self), NULL);
+    g_return_val_if_fail(state & obj_state, FALSE);
+
+    if (state & WORKMAN_STATE_ACTIVE) {
+        g_object_ref(consumer);
+        priv->consumers_active = g_list_append(priv->consumers_active,
+                                               consumer);
+        ret = TRUE;
+    }
+
+    if (state & WORKMAN_STATE_PERSISTENT) {
+        g_object_ref(consumer);
+        priv->consumers_persistent = g_list_append(priv->consumers_persistent,
+                                                   consumer);
+        ret = TRUE;
+    }
+
+    return ret;
 }
 
 
 gboolean
 workman_partition_remove_consumer(WorkmanPartition *self,
+                                  WorkmanState state,
                                   WorkmanConsumer *consumer)
 {
-    GList *l;
+    WorkmanPartitionPrivate *priv = self->priv;
+    gboolean ret = FALSE;
 
-    if (!g_list_find(self->priv->consumers, consumer))
-        return FALSE;
+    if (state & WORKMAN_STATE_ACTIVE &&
+        g_list_find(priv->consumers_active, consumer)) {
 
-    self->priv->consumers = g_list_remove(self->priv->consumers, consumer);
-    g_object_unref(consumer);
-    return TRUE;
+        priv->consumers_active = g_list_remove(priv->consumers_active,
+                                               consumer);
+        g_object_unref(consumer);
+        ret = TRUE;
+    }
+
+    if (state & WORKMAN_STATE_PERSISTENT &&
+        g_list_find(priv->consumers_persistent, consumer)) {
+
+        priv->consumers_persistent = g_list_remove(priv->consumers_persistent,
+                                                   consumer);
+        g_object_unref(consumer);
+        ret = TRUE;
+    }
+
+    return ret;
 }
 
 
 gboolean
 workman_partition_add_child(WorkmanPartition *self,
+                            WorkmanState state,
                             WorkmanPartition *child)
 {
-    g_object_ref(child);
-    self->priv->children = g_list_append(self->priv->children, child);
+    WorkmanPartitionPrivate *priv = self->priv;
+    gboolean ret = FALSE;
+    WorkmanState obj_state;
+
+    obj_state = workman_object_get_state(WORKMAN_OBJECT(self), NULL);
+    g_return_val_if_fail(state & obj_state, FALSE);
+
+    if (state & WORKMAN_STATE_ACTIVE) {
+        g_object_ref(child);
+        priv->children_active = g_list_append(priv->children_active,
+                                              child);
+        ret = TRUE;
+    }
+
+    if (state & WORKMAN_STATE_PERSISTENT) {
+        g_object_ref(child);
+        priv->children_persistent = g_list_append(priv->children_persistent,
+                                                  child);
+        ret = TRUE;
+    }
+
+    return ret;
 }
 
 
 gboolean
 workman_partition_remove_child(WorkmanPartition *self,
+                               WorkmanState state,
                                WorkmanPartition *child)
 {
-    GList *l;
+    WorkmanPartitionPrivate *priv = self->priv;
+    gboolean ret = FALSE;
 
-    if (!g_list_find(self->priv->children, child))
-        return FALSE;
+    if (state & WORKMAN_STATE_ACTIVE &&
+        g_list_find(priv->children_active, child)) {
 
-    self->priv->children = g_list_remove(self->priv->children, child);
-    g_object_unref(child);
-    return TRUE;
+        priv->children_active = g_list_remove(priv->children_active,
+                                              child);
+        g_object_unref(child);
+        ret = TRUE;
+    }
+
+    if (state & WORKMAN_STATE_PERSISTENT &&
+        g_list_find(priv->children_persistent, child)) {
+
+        priv->children_persistent = g_list_remove(priv->children_persistent,
+                                                  child);
+        g_object_unref(child);
+        ret = TRUE;
+    }
+
+    return ret;
 }
 
 
