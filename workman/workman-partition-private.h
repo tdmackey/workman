@@ -45,6 +45,15 @@ gboolean workman_partition_remove_child(WorkmanPartition *partition,
                                         WorkmanState state,
                                         WorkmanPartition *child);
 
+WorkmanPartition *workman_partition_new(const gchar *name,
+                                        WorkmanState state,
+                                        GList *attributes,
+                                        WorkmanPartition *parent_active,
+                                        WorkmanPartition *parent_persistent,
+                                        GList *children_active,
+                                        GList *children_persistent,
+                                        GList *consumers_active,
+                                        GList *consumers_persistent);
 
 G_END_DECLS
 

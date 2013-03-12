@@ -327,6 +327,39 @@ workman_partition_set_parent(WorkmanPartition *self,
 }
 
 
+WorkmanPartition *
+workman_partition_new(const gchar *name,
+                      WorkmanState state,
+                      GList *attributes,
+                      WorkmanPartition *parent_active,
+                      WorkmanPartition *parent_persistent,
+                      GList *children_active,
+                      GList *children_persistent,
+                      GList *consumers_active,
+                      GList *consumers_persistent)
+{
+    if ((parent_active || children_active || consumers_active) &&
+        !(state & WORKMAN_STATE_ACTIVE))
+        return NULL;
+
+    if ((parent_persistent || children_persistent || consumers_persistent) &&
+        !(state & WORKMAN_STATE_PERSISTENT))
+        return NULL;
+
+    return WORKMAN_PARTITION(g_object_new(WORKMAN_TYPE_PARTITION,
+                                          "name", name,
+                                          "state", state,
+                                          "attributes", attributes,
+                                          "parent-active", parent_active,
+                                          "parent-persistent", parent_persistent,
+                                          "children-active", children_active,
+                                          "children-persistent", children_persistent,
+                                          "consumers-active", consumers_active,
+                                          "consumers-persistent", consumers_persistent,
+                                          NULL));
+}
+
+
 gboolean
 workman_partition_add_consumer(WorkmanPartition *self,
                                WorkmanState state,
