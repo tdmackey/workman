@@ -367,10 +367,13 @@ workman_partition_add_consumer(WorkmanPartition *self,
 {
     WorkmanPartitionPrivate *priv = self->priv;
     gboolean ret = FALSE;
-    WorkmanState obj_state;
+    WorkmanState obj_state, cons_state;
 
     obj_state = workman_object_get_state(WORKMAN_OBJECT(self), NULL);
     g_return_val_if_fail(state & obj_state, FALSE);
+
+    cons_state = workman_object_get_state(WORKMAN_OBJECT(consumer), NULL);
+    g_return_val_if_fail(state & cons_state, FALSE);
 
     if (state & WORKMAN_STATE_ACTIVE) {
         g_object_ref(consumer);
@@ -427,10 +430,13 @@ workman_partition_add_child(WorkmanPartition *self,
 {
     WorkmanPartitionPrivate *priv = self->priv;
     gboolean ret = FALSE;
-    WorkmanState obj_state;
+    WorkmanState obj_state, child_state;
 
     obj_state = workman_object_get_state(WORKMAN_OBJECT(self), NULL);
     g_return_val_if_fail(state & obj_state, FALSE);
+
+    child_state = workman_object_get_state(WORKMAN_OBJECT(child), NULL);
+    g_return_val_if_fail(state & child_state, FALSE);
 
     if (state & WORKMAN_STATE_ACTIVE) {
         g_object_ref(child);
