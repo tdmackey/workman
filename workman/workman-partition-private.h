@@ -29,21 +29,21 @@
 G_BEGIN_DECLS
 
 
-gboolean workman_partition_add_consumer(WorkmanPartition *partition,
-                                        WorkmanState state,
-                                        WorkmanConsumer *consumer);
+gboolean workman_partition_add_consumer_priv(WorkmanPartition *partition,
+                                             WorkmanState state,
+                                             WorkmanConsumer *consumer);
 
-gboolean workman_partition_remove_consumer(WorkmanPartition *partition,
-                                           WorkmanState state,
-                                           WorkmanConsumer *consumer);
+gboolean workman_partition_remove_consumer_priv(WorkmanPartition *partition,
+                                                WorkmanState state,
+                                                WorkmanConsumer *consumer);
 
-gboolean workman_partition_add_child(WorkmanPartition *partition,
-                                     WorkmanState state,
-                                     WorkmanPartition *child);
+gboolean workman_partition_add_child_priv(WorkmanPartition *partition,
+                                          WorkmanState state,
+                                          WorkmanPartition *child);
 
-gboolean workman_partition_remove_child(WorkmanPartition *partition,
-                                        WorkmanState state,
-                                        WorkmanPartition *child);
+gboolean workman_partition_remove_child_priv(WorkmanPartition *partition,
+                                             WorkmanState state,
+                                             WorkmanPartition *child);
 
 WorkmanPartition *workman_partition_new(const gchar *name,
                                         WorkmanState state,

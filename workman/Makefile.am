@@ -24,6 +24,7 @@ HEADERS_PRIVATE = \
 			workman-object-private.h \
 			workman-partition-private.h \
 			workman-consumer-private.h \
+			workman-manager-linux.h \
                         $(NULL)
 CFILES = \
 			workman-main.c \
@@ -33,6 +34,7 @@ CFILES = \
 			workman-partition.c \
 			workman-consumer.c \
 			workman-manager.c \
+			workman-manager-linux.c \
 			workman-lists.c \
                         $(NULL)
 libworkman_1_0_la_SOURCES = \

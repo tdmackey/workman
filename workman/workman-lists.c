@@ -65,6 +65,17 @@ G_DEFINE_BOXED_TYPE(WorkmanProcessList,
                     list_copy,
                     list_free);
 
+typedef GList WorkmanPluginList;
+G_DEFINE_BOXED_TYPE(WorkmanPluginList,
+                    workman_plugin_list,
+                    list_copy,
+                    list_free);
+
+typedef GList WorkmanObjectList;
+G_DEFINE_BOXED_TYPE(WorkmanObjectList,
+                    workman_object_list,
+                    list_copy,
+                    list_free);
 
 /**
  * workman_list_merge:

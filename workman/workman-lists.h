@@ -33,11 +33,15 @@ G_BEGIN_DECLS
 # define WORKMAN_TYPE_PARTITION_LIST (workman_partition_list_get_type())
 # define WORKMAN_TYPE_CONSUMER_LIST (workman_consumer_list_get_type())
 # define WORKMAN_TYPE_PROCESS_LIST (workman_process_list_get_type())
+# define WORKMAN_TYPE_PLUGIN_LIST (workman_plugin_list_get_type())
+# define WORKMAN_TYPE_OBJECT_LIST (workman_object_list_get_type())
 
 GType workman_attribute_list_get_type(void) G_GNUC_CONST;
 GType workman_partition_list_get_type(void) G_GNUC_CONST;
 GType workman_consumer_list_get_type(void) G_GNUC_CONST;
 GType workman_process_list_get_type(void) G_GNUC_CONST;
+GType workman_plugin_list_get_type(void) G_GNUC_CONST;
+GType workman_object_list_get_type(void) G_GNUC_CONST;
 
 
 GList *workman_list_merge(GList *list_active,

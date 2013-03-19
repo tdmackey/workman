@@ -171,6 +171,23 @@ workman_consumer_init(WorkmanConsumer *self)
 
 }
 
+
+void
+workman_consumer_set_partition_priv(WorkmanConsumer *self,
+                                    WorkmanState state,
+                                    WorkmanPartition *partition)
+{
+    if (state & WORKMAN_STATE_ACTIVE) {
+        g_object_unref(self->priv->partition_active);
+        self->priv->partition_active = g_object_ref(partition);
+    }
+
+    if (state & WORKMAN_STATE_PERSISTENT) {
+        g_object_unref(self->priv->partition_persistent);
+        self->priv->partition_persistent = g_object_ref(partition);
+    }
+}
+
 gboolean
 workman_consumer_set_partition(WorkmanConsumer *consumer,
                                WorkmanState state,

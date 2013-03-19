@@ -53,7 +53,7 @@ enum {
 static void
 workman_partition_dispose(GObject *object)
 {
-    WorkmanPartition *self = WORKMAN_PARTITION(self);
+    WorkmanPartition *self = WORKMAN_PARTITION(object);;
 
     g_boxed_free(WORKMAN_TYPE_PARTITION_LIST, self->priv->children_active);
     self->priv->children_active = NULL;
@@ -361,9 +361,9 @@ workman_partition_new(const gchar *name,
 
 
 gboolean
-workman_partition_add_consumer(WorkmanPartition *self,
-                               WorkmanState state,
-                               WorkmanConsumer *consumer)
+workman_partition_add_consumer_priv(WorkmanPartition *self,
+                                    WorkmanState state,
+                                    WorkmanConsumer *consumer)
 {
     WorkmanPartitionPrivate *priv = self->priv;
     gboolean ret = FALSE;
@@ -394,9 +394,9 @@ workman_partition_add_consumer(WorkmanPartition *self,
 
 
 gboolean
-workman_partition_remove_consumer(WorkmanPartition *self,
-                                  WorkmanState state,
-                                  WorkmanConsumer *consumer)
+workman_partition_remove_consumer_priv(WorkmanPartition *self,
+                                       WorkmanState state,
+                                       WorkmanConsumer *consumer)
 {
     WorkmanPartitionPrivate *priv = self->priv;
     gboolean ret = FALSE;
@@ -424,9 +424,9 @@ workman_partition_remove_consumer(WorkmanPartition *self,
 
 
 gboolean
-workman_partition_add_child(WorkmanPartition *self,
-                            WorkmanState state,
-                            WorkmanPartition *child)
+workman_partition_add_child_priv(WorkmanPartition *self,
+                                 WorkmanState state,
+                                 WorkmanPartition *child)
 {
     WorkmanPartitionPrivate *priv = self->priv;
     gboolean ret = FALSE;
@@ -457,9 +457,9 @@ workman_partition_add_child(WorkmanPartition *self,
 
 
 gboolean
-workman_partition_remove_child(WorkmanPartition *self,
-                               WorkmanState state,
-                               WorkmanPartition *child)
+workman_partition_remove_child_priv(WorkmanPartition *self,
+                                    WorkmanState state,
+                                    WorkmanPartition *child)
 {
     WorkmanPartitionPrivate *priv = self->priv;
     gboolean ret = FALSE;

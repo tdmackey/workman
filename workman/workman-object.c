@@ -52,7 +52,6 @@ workman_object_get_property(GObject *object,
                             GParamSpec *pspec)
 {
     WorkmanObject *self = WORKMAN_OBJECT(object);
-    GList *attributes;
 
     switch (prop_id) {
         case PROP_NAME:
@@ -254,6 +253,13 @@ WorkmanState workman_object_get_state(WorkmanObject *self,
                                       GError **error)
 {
     return self->priv->state;
+}
+
+
+void workman_object_set_state(WorkmanObject *self,
+                              WorkmanState state)
+{
+    self->priv->state = state;
 }
 
 

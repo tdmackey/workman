@@ -1,5 +1,5 @@
 /*
- * workman-consumer-private.h: workload manager
+ * workman-object-private.h: workload manager
  *
  * Copyright (C) 2013 Red Hat, Inc.
  *
@@ -20,30 +20,20 @@
  * Author: Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#ifndef __WORKMAN_CONSUMER_PRIVATE_H__
-# define __WORKMAN_CONSUMER_PRIVATE_H__
+#ifndef __WORKMAN_OBJECT_PRIVATE_H__
+# define __WORKMAN_OBJECT_PRIVATE_H__
 
-# include "workman-partition.h"
-# include "workman-consumer.h"
+# include "workman-object.h"
+# include "workman-state.h"
 
 G_BEGIN_DECLS
 
-
-WorkmanConsumer *workman_consumer_new(const gchar *name,
-                                      WorkmanState state,
-                                      GList *attributes,
-                                      WorkmanPartition *partition_active,
-                                      WorkmanPartition *partition_persistent,
-                                      GList *processes);
-
-void workman_consumer_set_partition_priv(WorkmanConsumer *consumer,
-                                         WorkmanState state,
-                                         WorkmanPartition *partition);
-
+void workman_object_set_state(WorkmanObject *object,
+                              WorkmanState state);
 
 G_END_DECLS
 
-#endif /* __WORKMAN_PARTITION_PRIVATE_H__ */
+#endif /* __WORKMAN_OBJECT_PRIVATE_H__ */
 
 /*
  * Local variables:
