@@ -4,9 +4,10 @@ EXTRA_DIST = libworkman.sym
 lib_LTLIBRARIES = libworkman-1.0.la
 
 libworkman_1_0_ladir = $(includedir)/workman-1.0/workman
-libworkman_1_0_la_GENERATED = \
+GENERATED_FILES = \
 			workman-enums.h \
-			workman-enums.c
+			workman-enums.c \
+			$(NULL)
 libworkman_1_0_la_HEADERS = \
 			workman.h \
 			workman-main.h \
@@ -19,9 +20,12 @@ libworkman_1_0_la_HEADERS = \
 			workman-state.h \
 			workman-lists.h \
                         $(NULL)
-libworkman_1_0_la_SOURCES = \
-			$(libworkman_1_0_la_HEADERS) \
-			$(libworkman_1_0_la_GENERATED) \
+HEADERS_PRIVATE = \
+			workman-object-private.h \
+			workman-partition-private.h \
+			workman-consumer-private.h \
+                        $(NULL)
+CFILES = \
 			workman-main.c \
 			workman-attribute.c \
 			workman-process.c \
@@ -30,6 +34,12 @@ libworkman_1_0_la_SOURCES = \
 			workman-consumer.c \
 			workman-manager.c \
 			workman-lists.c \
+                        $(NULL)
+libworkman_1_0_la_SOURCES = \
+			$(libworkman_1_0_la_HEADERS) \
+			$(HEADERS_PRIVATE) \
+			$(GENERATED_FILES) \
+			$(CFILES) \
                         $(NULL)
 libworkman_1_0_la_CFLAGS = \
 			-DWORKMAN_BUILD \
@@ -65,7 +75,7 @@ workman-enums.c: $(libworkman_1_0_la_HEADERS) Makefile workman-enums.h
 		--vtail "            { 0, NULL, NULL }\n        };\n        etype = g_@type@_register_static (\"@EnumName@\", values);\n    }\n    return etype;\n}\n" \
 		$(libworkman_1_0_la_HEADERS) > workman-enums.c
 
-CLEANFILES = $(libworkman_1_0_la_GENERATED)
+CLEANFILES = $(GENERATED_FILES)
 
 if WITH_GOBJECT_INTROSPECTION
 
@@ -85,7 +95,9 @@ Workman-1.0.gir: libworkman-1.0.la $(G_IR_SCANNER) Makefile.am
                 --pkg=gthread-2.0 \
                 --c-include="workman/workman.h" \
                 --pkg-export=workman-1.0 \
-                $(libworkman_1_0_la_SOURCES:%=$(srcdir)/%)
+		$(libworkman_1_0_la_HEADERS:%=$(srcdir)/%) \
+		$(GENERATED_FILES:%=$(srcdir)/%) \
+		$(CFILES:%=$(srcdir)/%)
 
 girdir = $(datadir)/gir-1.0
 gir_DATA = Workman-1.0.gir
