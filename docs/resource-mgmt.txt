@@ -1,0 +1,1518 @@
+    Thoughts on resource management in modern Linux
+    ===============================================
+
+This document looks at the state of resource management in modern Linux
+systems, with a focus on SystemD and libvirt as the current mainstream
+users of cgroups & related technologies.
+
+
+Kernel resource management technologies
+=======================================
+
+The kernel provide a number of technologies related to resource management
+whose capabilities will be briefly outlined here.
+
+
+Control cgroups (aka "cgroups")
+-------------------------------
+
+At its heart, the control groups feature of modern kernels is simply a way
+to arrange processes into arbitrary, hierarchical groups. There is the
+ability to create multiple, distinct hierarchies, so any single process
+can be assigned to multiple groups at the same time. These groups need not
+be arranged with the same hierarchical structure.
+
+Each process group hierarchy may have zero or more resource controllers
+associated with it. If no resource controllers are associated, the tree
+is simply a convenient way to group processes, with no functional impact
+on their runtime behaviour. For example, systemd uses a cgroup tree with
+no resource controllers, in order to keep track of processes it spawns.
+
+There are a number of resource controllers available, which are able to
+control or track different aspects of a process' behaviour.
+
+ - cpu
+
+   Schedular parameter tuning
+
+     * cpu.cfs_period_us  # scheduling period in nanoseconds
+     * cpu.cfs_quota_us   # scheduling quota in nanoseconds
+     * cpu.rt_period_us   # scheduling period in nanoseconds
+     * cpu.rt_quota_us    # scheduling quota in nanoseconds
+     * cpu.shares         # relative priority shares
+     * cpu.stat           # statistics on scheduling decisions
+
+
+ - cpuacct
+
+   Accounting of CPU cycles consumed by processes in the group
+
+     * cpuacct.stat          # user & system time in USER_HZ
+     * cpuacct.usage         # total CPU time in nanoseconds
+     * cpuacct.usage_percpu  # total CPU time per physical CPU in nanoseconds
+
+
+ - cpuset
+
+   Control of physical CPU or NUMA memory node affinity. Tunables
+   for controlling memory migration & allocation behaviour
+
+     * cpuset.cpus                      # list of CPUs in that cpuset
+     * cpuset.mems                      # list of Memory Nodes in that cpuset
+     * cpuset.memory_migrate flag       # if set, move pages to cpusets nodes
+     * cpuset.cpu_exclusive flag        # is cpu placement exclusive?
+     * cpuset.mem_exclusive flag        # is memory placement exclusive?
+     * cpuset.mem_hardwall flag         # is memory allocation hardwalled
+     * cpuset.memory_pressure           # measure of how much paging pressure in cpuset
+     * cpuset.memory_spread_page flag   # if set, spread page cache evenly on allowed nodes
+     * cpuset.memory_spread_slab flag   # if set, spread slab cache evenly on allowed nodes
+     * cpuset.sched_load_balance flag   # if set, load balance within CPUs on that cpuset
+     * cpuset.sched_relax_domain_level  # the searching range when migrating tasks
+
+
+ - memory
+
+   Control over a wide variety of memory usage tunables and reporting
+   on usage statitics
+
+     * memory.failcnt                      # show the number of memory usage hits limits
+     * memory.force_empty                  # trigger forced move charge to parent
+     * memory.kmem.tcp.limit_in_bytes      # set/show hard limit for tcp buf memory
+     * memory.kmem.tcp.usage_in_bytes      # show current tcp buf memory allocation
+     * memory.kmem.tcp.failcnt             # show the number of tcp buf memory usage hits limits
+     * memory.kmem.tcp.max_usage_in_bytes  # show max tcp buf memory usage recorded
+     * memory.oom_control                  # set/show oom controls.
+     * memory.limit_in_bytes               # set/show limit of memory usage
+     * memory.max_usage_in_bytes           # show max memory usage recorded
+     * memory.memsw.failcnt                # show the number of memory+Swap hits limits
+     * memory.memsw.limit_in_bytes         # set/show limit of memory+Swap usage
+     * memory.memsw.max_usage_in_bytes     # show max memory+Swap usage recorded
+     * memory.memsw.usage_in_bytes         # show current res_counter usage for memory+Swap
+     * memory.move_charge_at_immigrate     # set/show controls of moving charges
+     * memory.numa_stat                    # show the number of memory usage per numa node
+     * memory.soft_limit_in_bytes          # set/show soft limit of memory usage
+     * memory.stat                         # show various statistics
+     * memory.swappiness                   # set/show swappiness parameter of vmscan
+     * memory.usage_in_bytes               # show current res_counter usage for memory
+     * memory.use_hierarchy                # set/show hierarchical account enabled
+
+
+ - devices
+
+   Access control lists for block / character device access (read,write,mknod)
+
+     * devices.allow  # Allow block/char major/minor number
+     * devices.deny   # Deny block/char major/minor number
+     * devices.list   # Show list of allow/deny rules
+
+
+ - freezer
+
+   Control over execution state of processes
+
+     * freezer.state  # Control whether processes are running / stopped
+
+ - net_cls
+
+   Association of processes to traffic classifier policies
+
+     * net_cls.classid: identifier of traffic class policy
+
+ - blkio
+
+     * blkio.io_merged                   # Count of merged requests
+     * blkio.io_queued                   # Count of queued requests
+     * blkio.io_service_bytes            # Byte transfer count per device
+     * blkio.io_serviced                 # IO op count per device
+     * blkio.io_service_time             # Time between IO op request dispatch & completeion
+     * blkio.io_wait_time                # Time spent waiting on IO ops
+     * blkio.reset_stats                 # Resets all accounting statistics
+     * blkio.sectors                     # Sector transfer count per device
+     * blkio.throttle.io_service_bytes   # Limit bytes transfered per device
+     * blkio.throttle.io_serviced        # Limit IO operations completed per device
+     * blkio.throttle.read_bps_device    # Limit on bytes read per second per device
+     * blkio.throttle.read_iops_device   # Limit read operations per second per device
+     * blkio.throttle.write_bps_device   # Limit on bytes written per second per device
+     * blkio.throttle.write_iops_device  # Limit write operations per second per device
+     * blkio.time                        # Disk time used per device in milliseconds
+     * blkio.weight                      # Default weight for all devices
+     * blkio.weight_device               # Per device weight override
+
+
+ - perf_event
+
+   Unknown behaviour. Not documented AFAICT
+
+
+The current best practice is for all cgroup trees to be mounted at
+/sys/fs/cgroup/<mountname>. By convention <mountname> is a comma
+separated list of all resource controllers associated with the tree,
+or an application name if no controllers are associated.
+
+
+An important point to note is that not all controllers will fully
+honour the hiearchy. ie they may flatten it out so that all sub
+groups are effectively operating at the first level. In addition for
+some controllers, performance will degrade as the hiearchy depth
+increases, or as the total number of groups increases.
+
+
+Traffic Control (aka  'tc')
+---------------------------
+
+The kernel traffic control facility provides a framework for controlling network
+interface traffic. The controls fall into 4 major buckets
+
+  * Shaping
+
+    When traffic is shaped, its rate of transmission is under control. Shaping
+    may be more than lowering the available bandwidth - it is  also  used  to
+    smooth out bursts in traffic for better network behaviour. Shaping occurs on egress.
+
+  * Scheduling
+
+    By  scheduling  the  transmission of packets it is possible to improve
+    interactivity for traffic that needs it while still guaranteeing bandwidth to
+    bulk transfers. Reordering is also called prioritizing, and happens only on egress.
+
+  * Policing
+
+    Where shaping deals with transmission of traffic, policing pertains to traffic
+    arriving. Policing thus occurs on ingress.
+
+  * Dropping
+
+    Traffic exceeding a set bandwidth may also be dropped forthwith, both on ingress
+    and on egress.
+
+
+Processing of traffic is controlled via a number of objects, qdiscs, classes and
+fitlers. Each network interface has an associated qdisc, regardless of what type
+of interface it is - physical, software bridge, TAP device, etc. This is particularly
+relevant for virtualization, since it means individual virtual NICs can have their
+traffic shaped. As mentioned earlier, as well as being associated with NICs, controls
+can also be associated with cgroups.
+
+A great many policies can be built from this toolkit, but in terms of resource
+partitioning, it is particularly interesting to be able to place hard caps, and
+min guarantees on traffic.
+
+
+Memory sharing (KSM)
+--------------------
+
+The Kernel Samepage Merging (KSM) service identifies memory pages across applications
+whose contents are identical and merges the pages into one. In cases where there are
+many instances of the same application running, or where many instances of the same
+virtual machine template running, this can lead to significant memory savings. There
+is a tradeoff though between the CPU time required to identify sharable pages, vs
+the memory consumption wins. As such it is only applicable to use it where the machine
+is memory limited, while having significant spare CPU cycles.
+
+
+System ulimits
+--------------
+
+The setrlimit() system call / ulimit command can be used to control resources
+available to individual processes
+
+ * RLIMIT_AS - process virutal memory address space limit
+
+ * RLIMIT_CORE - core file size limit
+
+ * RLIMIT_CPU - CPU execution time limit
+
+ * RLIMIT_DATA - process data segment size limit
+
+ * RLIMIT_FSIZE - file size limit
+
+ * RLIMIT_MEMLOCK - memory locking limit
+
+ * RLIMIT_MSGQUEUE - POSIX message queue message byte size limit
+
+ * RLIMNIT_NICE - ceiling on process nice value
+
+ * RLIMIT_NOFILE - maximum number of file descriptors
+
+ * RLIMIT_NPROC - maximum number of processes
+
+ * RLIMIT_RTPRIO - ceiling on real time priority
+
+ * RLIMIT_RTTIME - ceiling on real time execution time
+
+ * RLIMUT_SIGPENDING - limit on number of pending signals
+
+ * RLIMIT_STACK - process stack size limit
+
+
+Global system control tunables
+------------------------------
+
+The kernel exposes a large number of global system control
+tunables via the proc and sysfs filesystems. Some, but not
+all, of these are related to resource controls. Many of the
+resource related ones have equivalents in cgroups.
+
+Some of the controls are further scoped to individual devices
+or pieces of hardware. For example, as well as allowing global
+IPv4 tunables to be set, proc also allows for per-NIC tunables.
+Similarly sysfs lets block device tunables to be set, while
+proc has schedular also has tunables that are per-CPU.
+
+
+Hardware partitioning
+---------------------
+
+There are many aspects to partitioning in modern hardware platforms
+
+ * CPU/Memory - NUMA topology partitions systems in a hiearchal
+                topology of CPU sockets and memory nodes
+
+ * Storage HBAs - NPIV technology allows FibreChannel HBAs to
+                  present multiple virtual HBAs to userspace
+                  each with separated LUN zoning & server side
+                  QoS controls
+
+ * Network Cards - SRIOV technology allows a single physical
+                   PCI network card to expose multiple virtual
+                   NICs to the kernel, each with their own
+                   transmit queues.
+
+This hardware level partitioning can be utilized to strictly separate
+workloads, without the need of software level accounting constructs.
+Alternatively it can be used in combination with software accounting
+to make separation more effective / practical to manage.
+
+
+Resource interactions
+=====================
+
+One of the core difficulties in resource control, is the interactions
+between different types of resources. In a general purpose OS environment,
+these interactions can quickly make resource control tasks impossible
+to solve in general. If the OS can be locked down to tailor to specific
+use cases, the general problem can dramatically simplified. A good example
+is the case of virtualization hosts, which typically have a very limited
+number of general OS services, with clearly defined needs. The task is
+firstly ensuring good isolation of the control plane OS, from the VMs, and
+then simply resource partitioning between VMs.
+
+
+ * Disk vs memory
+
+   Consider that an application has its RAM usage limited, such that an
+   attempt to exceed the limit results in the application being pushed
+   to swap. This can ensure strict partitioning of RAM, but the side
+   effect is that the limited application imposes a significant penalty
+   on all other applications using the disk that holds the swap partition.
+
+   This applies to the host as a whole too. It may be more effective
+   to reduce or even eliminate overcommit of memory to ensure that tasks
+   never get stalled by swap pagein activity.
+
+
+ * Memory vs CPU for NUMA
+
+   Careful consideration of RAM vs CPU resource allocation is required
+   in machines where NUMA is in use. Incorrect placement or inappropriately
+   chosen limits can have a serious detrimental affect on overall utilization.
+   For example, if a 16 GB machine has 4 equal NUMA nodes, then giving an
+   application a 5 GB RAM limit can actually result in worse performance
+   than if the same application was given 4 GB. The reason is that the
+   application will spill over into 2 NUMA nodes, resulting in increased
+   memory traffic between NUMA nodes. This can increase CPU stalls for
+   all applications on the host. Thus there is the unexpected scenario
+   that lowering memory allocations can increase performance
+
+
+ * Memory vs CPU for KSM
+
+   The KSM technology allows increased memory utilization by sharing
+   memory pages. This comes at the cost of CPU time required to identify
+   and merge pages. Thus while memory utilization can be increased, the
+   host may suffer a net loss in performance, because of lost CPU cycles.
+   Accepting lower utilization can be a better overall strategy
+
+
+ * Disk vs network
+
+   In a case where the host is using network based storage, block I/O
+   rates will have an impact not only on the block I/O performance of other
+   applications, but also the overall network performance. Conversly placing
+   policies on network traffic, can affect performance of block I/O.
+
+
+ * Software vs hardware
+
+   If a goal is to ensure that two applications have equal share of the
+   network, it can be desirable to take advantage of isolation at the
+   hardware level, rather than relying on software. For example, rather
+   than setting up traffic control filters to share bandwidth, use SRIOV
+   to dedicate a different NIC to each application, allowing the hardware
+   to deal with isolation. Network switch technologies such as VEPA can
+   allow traffic shaping to be offloaded to the network switch, which
+   has a world view of all hosts in the LAN rather than just apps on
+   one host. A similar concept applies to storage utilizing NPIV techology,
+   where separating apps via vHBAs allows SAN-side control over resource
+   utilization.
+
+
+ * Isolation vs utilization
+
+   Resource control requirements can often be mutually exclusive. For
+   example, strong isolation of CPU usage between apps can be achieved
+   by applying hard caps in schedular policy. The flipside is that the
+   machine may be forced to idle CPUs despite having runnable tasks
+   because the runnable tasks have exceeded their quota.
+
+
+ * System service interactions
+
+   While there can be a desire to place limits or guarantees against
+   applications, the interactions between applications can nullify
+   the overall impact of the attempted controls. For example, if an
+   application is given higher priority than the audit daemon, the
+   app may get stalled waiting on the completion of audit activity
+   which has been deprioritized. The same scenario can occur when
+   dealing with storage technologies like Gluster/Ceph which rely
+   on FUSE based userspace services. Care must be taken to ensure
+   that the storage daemons are prioritized sufficiently that they
+   do not cause stalls in the application. These are all general
+   examples of priority inversion problems. This kind of problem is
+   incredibly difficult to solve in a general purpose OS. It typically
+   requires a global analysis of the system as a whole, with a fixed
+   set of components to identify a policy that operates correctly.
+
+
+OS infrastructure resource control
+==================================
+
+A number of pieces of OS infrastructure make use of the kernel resource
+control facilities, the two most prevalent being systemd and libvirt.
+These will now be examined further
+
+
+SystemD
+-------
+
+The SystemD init service has integration with cgroups to achieve a number
+of goals. The core architectural reason systemd needs cgroups is to keep
+track of processes associated with each service it spawns. It does this
+using a private cgroups hierarchy that has no controllers attached to it.
+This is found at /sys/fs/cgroup/systemd.
+
+By default, systemd will also mount each cgroups resource controller
+built into the kernel with a private tree. These are fond at
+/sys/fs/cgroup/<controllername>. It has an option to co-mount controllers
+and this is typically done for the 'cpu' and 'cpuacct' controllers. Thus
+they will be found at /sys/fs/cgroup/cpu,cpuacct
+
+In its own private cgroup hierarchy, and in the 'cpu' hierarchy, systemd
+will create two top level groups
+
+  - system - with a subdirectory for each system service
+  - user   - with a subdirectory for each logged in user
+
+This leads to a hiearchy such as this by default:
+
+  /sys/fs/cgroup
+   |
+   +- blkio
+   |
+   +- cpu  (symlink to cpu,cpuacct)
+   |
+   +- cpuacct  (symlink to cpu,cpuacct)
+   |
+   +- cpu,cpuacct
+   |   |
+   |   +- system
+   |   |   |
+   |   |   +- atd.service
+   |   |   +- dbus.service
+   |   |   +- ...
+   |   |
+   |   +- user
+   |       |
+   |       +- berrange
+   |            |
+   |            +- 3   (desktop session)
+   |            +- 672 (remote ssh login sshd PID 672)
+   |            +- 946 (remote ssh login sshd PID 946
+   |
+   +- cpuset
+   |
+   +- devices
+   |
+   +- freeze
+   |
+   +- memory
+   |
+   +- net_cls
+   |
+   +- perf_event
+   |
+   +- systemd
+       |
+       +- system
+       |   |
+       |   +- atd.service
+       |   +- dbus.service
+       |   +- ...
+       |
+       +- user
+           |
+           +- berrange
+                |
+                +- 3   (desktop session)
+                +- 672 (remote ssh login sshd PID 672)
+                +- 946 (remote ssh login sshd PID 946)
+
+As can be seen above, systemd will not attempt to put services into custom
+groups for the cpuset, memory, net_cls, etc controllers by default. They
+just remain in the root.
+
+It is possible to alter the unit files on a per service basis to instruct
+systemd to place services in explicit locations in each controller hierarchy.
+Although systemd will normally delete cgroups when the service exits, it can
+be instructed to leave them around. Further, the cgroup ownership can be set
+to a non-root user, to delegate management of the cgroup & its children.
+
+Finally, systemd can be told set arbitrary cgroup attributes against a
+service. One limitation is that if systemd is told to put a process in a deep
+subdirectory in a hiearchy, there is no built-in facility to set cgroup attributes
+in the parent levels. ie systemd only provides control over the leave nodes in
+the tree which hold the service processes. An external tool must be used to manage
+attributes in the branches.
+
+Systemd has set out a number of best practice rules to enable co-operation
+between different applications using cgroups, without requiring a central
+daemon to hold a "world view" of the entire system. This is described in
+
+   http://www.freedesktop.org/wiki/Software/systemd/PaxControlGroups
+
+Systemd supports setting tunables beyond those available via cgroups, in particular:
+
+  - System ulimits (via the setrlimit syscall)
+  - CPU schedular policy & priority (via the sched_setschedular syscall)
+  - I/O schedular class & priority (via the ioprio_set syscall)
+  - OOM score - (via /proc/$PID/oom_{adj,score,score_adj}
+  - Nice level (via setpriority syscall)
+
+Many of these controls are also available via cgroups tunables. The difference is
+that settings via cgroups apply to the whole group of processes as a whole, while
+the non-cgroups controls apply to each individual process separately.
+
+
+libvirt
+-------
+
+The libvirt virtualization management service makes use of a number of the kernel
+resource control facilities for the hypervisors it supports. For both KVM and LXC,
+cgroups will be used to group together processes associated with each individual
+instance. Libvirt defaults to creating a 3-level (LXC/QEMU) or 4-level (KVM)
+hierarchy. At the top level is simply a group called 'libvirt' under which all
+virtual machines or containers are placed. This group is not created in the root
+of the cgroup hiearchy, but rather at the location where libvirtd itself is running.
+
+The second level is a per-driver group, used to separate KVM and LXC instances.
+The third level is a per-instance group, one per virtual machine or container.
+This is where the actual resource control settings are usually made via the libvirt
+tuning APIs. In the case of KVM, there is a fourth level where each virtual CPU
+thread gets a private cgroup for the 'cpu' controller. There is also a dedicated
+group at the 4th level to hold the non-vCPU threads. The rationale for the 4th
+level to is facilitate placing of fixed caps on CPU utilization per vCPU, rather
+than per VM. This ensures that as the number of vCPUs increases, the amount of
+available CPU time increases to match.
+
+With all this in mind, and considering how systemd structures cgroups for daemons
+it launches the libvirt hierarchy will appear like this:
+
+ /system/libvirtd.service  (or /user/berrange/3 for non-root libvirtd)
+   |
+   +- libvirt
+       |
+       +- qemu
+       |   |
+       |   +- jboss1
+       |   |   |
+       |   |   +- vcpu0
+       |   |   +- vcpu1
+       |   |   +- emulator
+       |   |
+       |   +- postgres1
+       |   |   |
+       |   |   +- vcpu0
+       |   |   +- vcpu1
+       |   |   +- vcpu2
+       |   |   +- vcpu3
+       |   |   +- emulator
+       |   |
+       |   ...
+       |
+       +- lxc
+           |
+           +- apache1
+           |
+           +- apache2
+           |
+           +- apache2
+           |
+           ...
+
+Today you would probably not have LXC and KVM in use on the same host for data
+center virt. Mixed deployments may become more common though as the virt-sandbox
+opens up new opportunities.
+
+Aside from cgroups, libvirt makes use of libnuma for controlling NUMA memory
+placement of VMs, sched_setaffinity for CPU placement and certain ulimits. It
+also makes use of the kernel network traffic control service, to set policies
+on a per-NIC basis. Per-VM level network control is not immediately useful,
+since there's a need to priortize individual guest NICs separately.
+
+Although libvirt currently uses blkio controller for disk I/O controls, there
+is a plan to make use of QEMU's native filtering to allow file-based VM disk
+images to have I/O controls applied per-disk, even when the disk images live
+on the same block device.
+
+Libvirt provides a number of APIs for controlling resource tuning parameters
+
+   * virDomainGetSchedulerParameters, virDomainSetSchedulerParameters
+
+     CPU schedular parameters, primarily mapping to the 'cpu' cgroups
+     controller parameters.
+
+   * virDomainSetMemoryParameters, virDomainGetMemoryParameters
+
+     Memory tuning parameters, primarily mapping to the 'memory' cgroups
+     controller parameters.
+
+   * virDomainGetBlkioParameters, virDomainSetBlkioParameters
+
+     Block I/O tuning parameters, primarily mapping to the 'blkio' cgroups
+     controller parameters. Can be set per-VM or per-host-block device.
+     No direct control per guest virtual disk.
+
+   * virDomainGetInterfaceParameters, virDomainSetInterfaceParameters
+
+     NIC I/O tuning parameters, mapping to the per-virtual NIC 'tc'
+     class. No tuning per-guest, all per-NIC
+
+   * virDomainGetNumaParameters, virDomainSetNumaParameters
+
+     Memory NUMA allocation policies, primarily mapping to the 'cpuset'
+     cgroups controller parameters.
+
+   * virNodeGetMemoryParameters, virNodeSetMemoryParameters
+
+     Host memory control parameters, primiarly mapping to KSM tunables
+     in sysfs.
+
+The APIs control the parameters for running VMs. All of the above parameters
+can be set in the XML to affect the guest at initial startup. There are a
+number of parameters that can only be set at startup.
+
+There are also APIs for querying resource consumption statistics
+
+   * virDomainBlockStats - per-virtual disk I/O statistics
+
+   * virDomainInterfaceStats - per-virtual NIC I/O statistics
+
+   * virDomainMemoryStats - per VM host & guest OS memory utilization
+
+   * virDomainGetCPUStats - per vCPU CPU utilization
+
+   * virNodeGetCPUStats - per host pCPU utilization
+
+   * virNodeGetMemoryStats - per host memory utilization
+
+
+Application resource control
+============================
+
+Above the OS infrastructure there are applications which also have direct
+resource control needs. The oVirt project is a core example which has very
+demanding resource control needs, to allow it to optimize utilization of
+hardware. In the future OpenStack will also pick up similar needs, though
+its focus will be tilted towards strong resource isolation, at the expense
+of overall hardware utilization.
+
+
+oVirt / VDSM
+------------
+
+The oVirt architecture uses libvirt as its primary mechanism for controlling
+KVM virtual machines. The broad goal of oVirt is to maximise the utilization
+of hardware to enable as many VMs as possible to be run on as little hardware
+as possible. Although resource isolation between VMs is also important, it
+tends to focus more on utilization.
+
+In terms of resource partitioning, its approach is currently fairly simplistic
+allowing administrators to pin VMs to specific CPUs and/or memory nodes.
+
+There is an aim to integrate MOM (Memory Overcommitment Manager) in order to
+allow automatic policy-driven management of memory resources, using a combination
+of cgroups limits, KSM and ballooning to adjust guests.
+
+   https://github.com/aglitke/mom/wiki
+
+As a distributed system, oVirt needs to consider the world beyond a single host.
+For example, copying a VM disk image not only consumes resources on the host
+on which it runs, but also on the SAN. This can then affect I/O performance of
+VMs running on other hosts.
+
+
+OpenStack
+---------
+
+The OpenStack architecture uses libvirt as its primary mechanism for controlling
+KVM virtual machines and LXC containers. The broad goal of OpenStack is to
+treat hardware as a service shared amongst a dispirate group of users. As
+such it focuses more on resource isolation, at the expense of overall hardware
+utilization.
+
+With that said, OpenStack's resource control capabilities at the time of
+writing are mostly non-existant. It has overcommit counters for overall host
+CPU and memory usage. It then simply places VM instances within these constraints.
+For example, if a host has 4 GB of RAM, and memory overcommit is set at 1.5,
+it'll never schedule guests with more than 6 GB of total RAM allocation.
+
+It makes no current efforts to balance resource usage between instances,
+or isolate the host control plane from the guests. This is expected to evolve
+over future releases.
+
+
+Administration use cases
+========================
+
+When considering solutions to the resource managment problem there are clearly
+many aspects which need to be considered and many technologies available to
+use. It is thus helpful to illustrate some broad user scenarios, which would
+form the basis for resource managment requirements.
+
+ * Management against "tasks" rather than processes
+
+   The objects against which resource usage has to be measured are typically
+   not individual processes, but rather groups of processes. For example, a
+   web server may comprise httpd processes and CGI script processes. A virtual
+   machine may comprise the QEMU process and kernel threads for networking.
+   A container may comprise the actual container processes, and the host
+   controller process.
+
+
+ * Ensure fairness between different users
+
+   On a multi-user system, the administrator wants to prevent a single user
+   from monopolizing the resources at the expense of other users. If the
+   users are not contending, they should be allowed to use as much resource
+   as they need. When they contend for a resource though, the system should
+   ensure fair access between users.
+
+   Example: a machine with 2 CPUs and 4 users.
+
+   If one user is idle, two users each have a 50% CPU workload requirement
+   and one has a 100% cpu workload requirement, they should be allowed to
+   utilize the CPU to meet their respective needs.
+
+   If one user is idle and three users each have a 100% CPU workload, then
+   the system should ensure they each get 66.67% CPU time.
+
+   If all four users have a 100% cpu workload requirement, then the system
+   should ensure they each get 50% CPU time
+
+
+
+ * Ensure isolation between different users
+
+   On a multi-user system,the administrator wants to ensure that each user
+   has a consistent resource ceiling, regardless of what other users workloads
+   are. The users will need to be capped in their usage, regardless of whether
+   they are contending for a resource
+
+   Example: a machine with 2 CPUs and 4 users.
+
+   If one user is idle, two users each have a 50% CPU workload requirement
+   and one has a 100% cpu workload requirement, they should each get 50%
+   CPU time. 50% of one CPU will remain idle.
+
+   If one user is idle and three users each have a 100% CPU workload, then
+   the system should ensure they each get 50% CPU time. 50% of one CPU
+   will remain idle.
+
+   If all four users have a 100% cpu workload requirement, then the system
+   should ensure they each get 50% CPU time.
+
+
+
+ * Partition the system between different users
+
+   On a multi-user system,the administrator wants to allocate a specific
+   portion of the resources to each user. The users will only be allowed
+   to use the specific resources that have been assigned to them.
+
+   Example: a machine with 4 CPUs, 16 GB of RAM and 2 NUMA nodes, 4 users.
+
+   The system will be split into 2 partitions, each having 2 CPUs and
+   8 GB of RAM. The division will mirror the NUMA topology. 2 users
+   will be assigned to each partiiton.
+
+   Within each partition, the policy can be set to either ensure fairness
+   or ensure isolation between user workloads.
+
+
+
+ * Prioritize response-time critical workloads over batch jobs
+
+   On a system running multiple distinct processes required by an application,
+   some processes are response-time critical, while other processes are offline
+   batch processing. The response-time critical processes must get prioritized
+   access to resources, at the expense of batch processes.
+
+   Example: a machine with stock trading process and a order processing batch job
+
+   The stock trading process must be allowed to burst upto 100% of all
+   available CPU resources. Under memory pressure, the batch job must be
+   targetted for swapping, prior to considering the trading process.
+   Trading process network traffic must be transmitted with minimal
+   latency, while the batch job traffic can be arbitrarily delayed.
+
+
+
+ * Protect the host OS services at the expense of virtual machines
+
+   On a system running KVM virtual machines, critical host OS services
+   such as sshd, libvirtd, systemd, journald, auditd must be protected
+   at the expense of virtual machines. A rogue KVM virtual machine must
+   not be able to negatively impact operation of the host OS services,
+   and thus negatively impact operation of other virtual machines
+
+   All the processes except for QEMU processes must have priority
+   access to resources. In the event of contention between a host
+   process and a virtual machine, the virtual machine must loose.
+   The virtual machines must be targetted for swapping, and the
+   OOM killer first. It must always be possible to login to the
+   host OS via ssh and use libvirtd, regardless of virtual machine
+   resource requirements.
+
+
+
+ * Ensure the desktop remains responsive for users
+
+   On a desktop system, administrative jobs such as reindexing
+   man pages, prelinking, or locate database updates must not impact
+   responsiveness for users.
+
+   Desktop session processes will have their I/O request policies
+   tuned for minimal latency. Background jobs will have their I/O
+   requests tuned for throughput but allow high latency. Desktop
+   session processes will get prioritized CPU scheduling. Background
+   processes will have a minimum guaranteed memory available, but
+   also a cap on what they can use.
+
+
+
+ * Delegation of resource allocation to users
+
+   On a virtualization host, the system can be split into
+   a number of resource groups. Each group can be assigned to
+   a company department. The department's users can then provide
+   resource fairness or isolation policies for virtual machines
+   they run.
+
+   The system can be either setup with per-department groups
+   based on fixed partitions (NUMA split), fairness or
+   isolation. With their own group, a department can then
+   create further groups to partitions the different workloads
+   they want to run.
+
+
+ * Delegation of resource allocation to containers
+
+   On a host using container virtualization, it must be possible
+   to delegate resource allocation to the container administator
+
+   The system can be running a number of containers. The host
+   administrator can assign containers resources. Inside the
+   container, the guest administrator is running system services.
+   It must be possible to control the resource allocation of the
+   containerized services
+
+
+Requirements
+============
+
+
+ * The following objects are to be managed
+
+   - System services (systemd)
+   - User sessions (SSH, GDM, etc)
+   - Arbitrary process groups (user spawned)
+   - Virtual machines (libvirt KVM/QEMU)
+   - Containers (libvirt LXC)
+
+ * Each managed object can be placed into a resource group
+
+ * Resource groups can be created
+
+ * Resource groups can be deleted, when no objects remain in them
+
+ * Resource groups can be renamed
+
+ * Resource groups can be nested
+
+ * Resource groups administrative privileges can be delegated to users
+
+ * The system will start with a default resoruces
+
+ * Objects can be set to start in designated resource groups
+
+ * Objects can moved between resource groups while active
+
+ * New objects inherit resouce group of the object creating them
+
+ * Tuning parameters can be set against resource groups
+
+ * Tuning parameters can be set against objects
+
+ * It must be possible to partition resources
+
+ * It must be possible to prioritize resources
+
+ * It must be possible to set min floor / max ceiling on resources
+
+ * Changes to objects should go via the application specific API
+
+ * A C library must provide a mechanism for control of resources
+
+ * The C library should be accessible from Python, Perl, etc
+
+ * A command line tool must provide a mechanism for control of resources
+
+ * A GUI tool must provide a mechanism for control of resources
+
+
+High Level Design
+=================
+
+Given the available resource control facilities in Linux, it is clear that
+cgroups will be at the core of a solution to satisfy the resource tuning
+requirements. The solution should not exclusively focus on cgroups, however,
+but generalize to cover traffic shaping, sysfs and other resource control
+mechanisms that can be exposed.
+
+Current guidelines for usage of cgroups by applications are overly
+restrictive in that they force applications to build a cgroups hierarchy
+that reflects the process hierachy. For example, libvirt is required to
+create all its cgroups in the subdirectory where libvirtd was started.
+To satisfy the management requirements, it is neccesary for applications
+to be able to create cgroups in a hierarchy that is independant of the
+process management hierarchy. This will imply some enhacements to the
+current cgroups usage guidelines.
+
+The current libcgroup management library is broadly a direct mapping to
+the cgroups filesytem interface. This exposes an undesirably low level
+interface to applications. For example, all applications see is a
+hiearchy of groups, with no information about the kind of object that
+is associated with the group. ie they can't tell if a group is for a
+systemd service, a container, a virtual machine or user session. It
+also exposes the notion of controllers with multiple hierarchies which
+is an undesirable complication to the task.
+
+It is anticipated that a new library will be written providing an API
+based around the concepts of resource groups and objects. The library
+will be responsible for directly creating and managing resource groups,
+probably using the libcgroup library. For objects, there will be a
+mechanism to allow applications like systemd or libvirt to provide
+data about the types of object they have available for management.
+This will also provide the application specific hooks for updating
+the object policy, for example by making libvirt API calls, or by
+rewriting sytemd unit files.
+
+Some form of "new object" command line tool will be provide to allow
+users to arbitrarily associate process groups as new objects and
+place them into resource pools. For example, a cron job might run
+
+    /sbin/newobject --resource-group batchjobs /sbin/updatedb
+
+to create a new object for all processes associated with the
+'updatedb' command, placing them in a group 'batchjobs'.
+
+The C library will need to be made available to a wide variety of
+programming language. To minimise development burden, it is expected
+that the C library will be written using the gobject library, and
+GObject Introspection leveraged to make the APIs available to Perl,
+Python, Ruby, Vala, JavaScript. Java is desirable, but the current
+impl of Object Introspection for Java is incomplete, with no active
+maintainer.
+
+The library will have a corresponding command line tool which exposes
+all of its functionality in manner suitable for interactive usage by
+sysadmin administrators or usage in shell scripting.
+
+A graphical application will make use of the library (in any language
+appropriate) to allow administrators to graphically control the
+performance of their system, without requiring low level command
+knowledge
+
+
+
+Detailed design
+===============
+
+Cgroups hierarchy
+-----------------
+
+As mentioned earlier, the key to providing a practical resource
+management framework is to make a change to the guidelines for how
+applications interact with groups, to de-couple the hiearchy from
+the process hiearchy.
+
+Roughly speaking the cgroup hiearchy will be considered to be made
+up of branches and leaves, where branches represent resource groups
+and leaves represent objects. This will not neccesarily be the full
+story though, because privilege boundaries may cause an application
+or user to have restricted view over a sub-tree.
+
+For simplicity the ability to have different hiearchies under
+different controllers will be totally ignored & not exposed. All
+controllers can be mounted at the same place, but if not, then the
+same hiearchy will be setup under all mounts.
+
+The system will start with a single default group, in which all
+objects initially live.
+
+ $ROOT
+   +- system
+
+Further admin defined resource groups will be created at the top
+level too
+
+ $ROOT
+   +- system
+   +- developers
+   +- managers
+
+At first the only objects will be system services. Objects of this
+type will be in cgroups with a file etension of '.service'.
+
+ $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   ...
+   +- developers
+   +- managers
+
+When users log in, they will be placed into the default group.
+Depending on the method of login, the objects could have different
+naming convention.
+
+ * SSH login ->  $USER.$PID.ssh     eg berrange.234.ssh
+ * GDM login ->  $USER.$DISPLAY.gdm eg berrange.0.gdm
+ * VT login  ->  $USER.$VT.login    eg berrange.3.login
+
+Giving a group such as:
+
+ $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   +- berrange.0.gdm
+   |   +- berrange.2123.ssh
+   |   +- berrange.6431.ssh
+   |   ...
+   +- developers
+   +- managers
+
+There will be a mechanism to specify non-default resource cgroups
+for users. For example to specify that "berrange" goes into a
+"developers" group, while "linda" goes into a "managers" group
+
+
+ $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   ...
+   +- developers
+   |   +- berrange.0.gdm
+   |   +- berrange.2123.ssh
+   |   +- berrange.6431.ssh
+   +- managers
+       +- linda.234.ssh
+
+
+Applications such as libvirt, may define their own types of object
+to represent things like virtual machines, containers, etc. By
+default objects that libvirt runs will be placed into the same
+resource group that libvirtd itself is currently located in. THis
+is in constrast to current libvirt behaviour, where it creates a
+3-level hierarchy below its currently location
+
+So while old libvirt behaviour would be
+
+ $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   +- libvirtd.service
+   ...     +- libvirt
+               +- qemu
+                   +- web1
+                   +- web2
+                   +- web3
+
+The new behaviour would be
+
+ $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   +- libvirtd.service
+   ... +- web1.qemu
+       +- web2.qemu
+       +- web3.qemu
+
+Libvirt will have the ability to specify that virtual machines go
+into alternative groups. For example there might be departmental
+groups, and VMs assigned to each group
+
+ $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   +- libvirtd.service
+   |
+   +- eng
+   |   +- web1.qemu
+   |   +- web2.qemu
+   |
+   +- qa
+       +- web3.qemu
+
+
+Simiarly to KVM, any LXC containers that libvirt launches would
+follow a similar pattern, but with a different file extension
+to identify the object type.
+
+
+ $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   +- libvirtd.service
+   |
+   +- eng
+   |   +- web1.lxc
+   |   +- web2.lxc
+   |
+   +- qa
+       +- web3.lxc
+
+
+
+It will be possible to create nested groups, to allow delegation
+of resources. For example, the engineering department may wish
+to prioritize their web servers relative to each other
+
+ $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   +- libvirtd.service
+   |
+   +- eng
+   |   +- test
+   |   |    +- web1.lxc
+   |   |    +- web2.lxc
+   |   |    +- web3.lxc
+   |   +- production
+   |        +- web4.lxc
+   |        +- web5.lxc
+   |        +- web6.lxc
+   ...
+
+
+
+Inside a container, the guest OS will have a view onto a subtree
+of the full hiearchy. So for example, a container 's service will
+start off in the same type of hierarchy:
+
+  $CONTAINER_ROOT
+    +- system
+        +- httpd.service
+        +- mysql.service
+
+The host administrator though can see the full picture
+
+  $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   +- libvirtd.service
+   |
+   +- eng
+   |   +- test
+   |   |    +- web1.lxc  (maps to $CONTAINER_ROOT)
+   ... ...      +- system
+                    +- httpd.service
+                    +- mysql.service
+
+
+
+In a similar manner, if the administrator grants a non-root user
+the ability to create their own groups, the user will have their
+own "view" on a sub-tree. For example, the admin may have decided
+that 'berrange' is allowed to control resources, but linda is not.
+In such a case the admin would create a resource group to control
+everything 'berrange' does, and then create a default group within
+that called 'session' where all of berrange's objects will initially
+live
+
+ $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   ...
+   +- developers
+   |   +- berrange.user
+   |       +- session
+   |           +- berrange.0.gdm
+   |           +- berrange.2123.ssh
+   |           +- berrange.6431.ssh
+   +- managers
+       +- linda.234.ssh
+
+TBD: how to allow berrange to mkdir/rmdir in 'berrange.user' but
+not actually change the tunables in that group ?
+
+If 'berrange' now wants to run an unprivileged libvirtd instance
+and run virtual machines, the VMs will end up in the default group
+the admin created:
+
+
+ $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   ...
+   +- developers
+   |   +- berrange.user (chown'd berrange:berrange)
+   |       +- session
+   |           +- berrange.0.gdm
+   |           +- berrange.2123.ssh
+   |           +- berrange.6431.ssh
+   |           +- web1.kvm
+   |           +- web2.kvm
+   |           +- web3.kvm
+   +- managers
+       +- linda.234.ssh
+
+The user will likely want to isolate their login session proceses
+from virtual machines, so they'll create a custom group for them
+
+
+ $ROOT
+   +- system
+   |   +- crond.service
+   |   +- dbus.service
+   |   +- cups.service
+   |   ...
+   +- developers
+   |   +- berrange.user (chown'd berrange:berrange)
+   |       +- session
+   |       |   +- berrange.0.gdm
+   |       |   +- berrange.2123.ssh
+   |       |   +- berrange.6431.ssh
+   |       +- apps
+   |           +- web1.kvm
+   |           +- web2.kvm
+   |           +- web3.kvm
+   +- managers
+       +- linda.234.ssh
+
+
+
+Library Architecture
+--------------------
+
+To maximise its utility, the library needs to be accessible from a variety
+of programming languages. This implies, either a library in C with binding
+to other languages, or an RPC based service using DBus. Since there is no
+clear need or desire for the library to be stateful, it is thought that an
+RPC service would be overkill.
+
+Thus the intent is to provide a core C library. To avoid the need to write
+language bindings explicitly, the library will be based on GObject, making
+full use of GObject Introspection to allow dynamic access from languages
+including Python, Perl, JavaScript and Vala.
+
+The core idea behind the design of the library is to provide an API that
+exposes a general interface for resource control, which is indepedent of
+any one specific implementation technology. This is to enable it to be
+flexible enough to support management of sysfs, cgroups, network traffic
+shaper, and any other resource control mechanisms relevant to a host,
+as well as integration with application specific controls.
+
+The main concept in the library API is that of an hierarchy of objects.
+The base object class will be specialized for each technology being
+leveraged, for example there will be object classes for a 'os', 'cpu',
+'network interface', 'cgroup', 'process group', 'systemd service',
+'virtual machine', etc. Each object class will expose a number of
+applicable tunables. Within certain constraints, it will be possible
+to re-arrange the object hiearchy. For example, a 'systemd service'
+instance can be moved between any 'cgroup' object, but cannot be
+moved to be a child of a 'network inteface' object. Object instances
+will be responsible for handling updates of their tunables, and any
+hierarchy re-arrangements.
+
+Given the varying technologies to be consumed, the library will support
+pluggable / dynamically loadable object implementations via a dlopen()
+capability.
+
+Something along the lines of the following class hiearchy is anticipated:
+
+ * Object                   The base object from which all inherit
+    |
+    +- Kernel               General kernel tunables from sysfs/proc
+    |
+    +- Device               The base object for all hardware devices
+    |   |
+    |   +- NIC              Network interface tunables from sysfs/proc
+    |   +- Disk             Block device tunables from sysfs/proc
+    |   +- CPU              Physical CPU core tunables from sysfs/proc
+    |
+    +- Partition            A group which partitions system resources
+    |
+    +- Consumer             A group which consumes system resources
+        |
+        +- SystemService    A systemd service
+        +- VirtualDomain    Any libvirt virtual machine
+            +- QEMUDomain   A libvirt KVM/QEMU/UML VM
+            +- LXCDomain    A libvirt LXC container
+
+The "Partition" and "Consumer" objects can be expressed as a hiearchy.
+Every Consumer is associated with exactly one Partition, while a Partition
+is associated with zero or one other Partition objects.
+
+Objects will of course contain properties, which can be classified into two
+sets, tunables and statistics. Tunables are usually read/write values which
+affect performance/operation of the object. Tunables may be read-only if the
+current user has insufficient privileges. Statistics are read-only values
+which report information about the object state. Properties are essentially
+key,value pairs, and although all have a string representation, they actually
+have a variety of data types (string, integer, floating point, etc).
+
+In terms of GLib data types, it is expected that the GVariant type would be
+a suitable way to represent properties. The GVariant type is used effectively
+in the current GSettings configuration API which has very similar data
+representation requirements to the resource management library. Following this
+prior art will result in a more familiar API for application developers. The
+GVariant type is also effectively equivalent to the DBus type system which
+has proven effective in many application use cases.
+
+
+Data sources
+------------
+
+In building the API it needs to be decided what data sources will be used for
+the canonical information.
+
+ - CGroups hierarchy: Provides information about the *current* settings
+   for ResourceGroup, SystemService, VirtualDomain objects
+ - Systemd unit files: Provides information about the *future* settings
+   for SystemService objects
+ - Libvirt guest XML: Provides information about the *future* settings
+   for VirtualDomain objects
+ - /etc/cgconfig.conf: Provides information about the *future* settings
+   for ResourceGroup objects
+ - /proc/sys: Provides information about the *current* settings for
+   for Kernel objects
+ - /etc/sysctl.d, /etc/sysctl.conf: Provides information about the
+   *future* settings for Kenrel objects
+ - Unknown: traffic shaping classifier definitions
+
+From these data sources it should be clear that the API will actually need
+to expose two distinct hierarchies. One hierarchy reflects the persistent
+config, that applies to future created objects. The other hierarcy reflects
+the current state of the running system. It should be possible to synchronize
+configuration in both directions. ie take current running configuration and
+persistent it, or refresh the current running configuration from the offline
+data source
+
+
+Library API specification
+-------------------------
+
+  <...insert gobject boilerplate..>
+
+  typedef struct _WorkmanObject WorkmanObject;
+  typedef struct _WorkmanProcess WorkmanProcess;
+  typedef struct _WorkmanAttribute WorkmanAttribute;
+  typedef struct _WorkmanManager WorkmanManager;
+  typedef struct _WorkmanPartition WorkmanPartition;
+  typedef struct _WorkmanConsumer WorkmanConsumer;
+
+  WorkmanManager *workman_manager_new(void);
+
+  typedef enum {
+     WORKMAN_STATE_ALL,
+     WORKMAN_STATE_ACTIVE,
+     WORKMAN_STATE_PERSISTENT,
+  } WorkmanState;
+
+
+  GList *workman_object_get_attributes(WorkmanObject *obj,
+
+  WorkmanAttribute *workman_object_get_attribute(WorkmanObject *obj,
+                                                 const char *name,
+                                                 GError **error);
+
+  GVariant *workman_attribute_get_value(WorkmanAttribute *attr,
+                                        WorkmanState state,
+                                        GError **error);
+
+  gboolean workman_attribute_set_value(WorkmanAttribute *attr,
+                                       WorkmanState state,
+                                       GVariant *value,
+                                       GError **error);
+
+  gboolean workman_attribute_get_writable(WorkmanAttribute *attr);
+  const gchar *workman_attribute_get_name(WorkmanAttribute *attr);
+
+
+  GList *workman_manager_get_all_consumers(WorkmanManager *mgr,
+                                           WorkmanState state,
+					   GError **error);
+
+  GList *workman_manager_get_all_partitions(WorkmanManager *mgr,
+                                            WorkmanState state,
+					    GError **error);
+
+  WorkmanConsumer *workman_manager_get_consumer_by_name(WorkmanManager *mgr,
+                                                        const gchar *name,
+                                                        GError **error);
+
+  WorkmanPartition *workman_manager_get_partitions_by_name(WorkmanManager *mgr,
+                                                           const gchar *name,
+                                                           GError **error);
+
+  GList *workmanager_partition_get_consumers(WorkmanPartition *partition,
+                                             GError **error);
+
+  GList *workmanager_partition_get_children(WorkmanPartition *partition,
+                                            GError **error);
+
+  gboolean workman_consumer_set_partition(WorkmanConsumer *consumer,
+                                          WorkmanPartition *partition,
+                                          GError **error);
+
+  GList *workman_consumer_get_processes(WorkmanConsumer *consumer
+                                        GError **error);
+
+  gboolean workman_consumer_get_persistent(WorkmanConsumer *consumer
+                                           GError **error);
+  gboolean workman_consumer_get_active(WorkmanConsumer *consumer
+                                       GError **error);
+
+Command line tool
+-----------------
+
+The library will be accompanied by a command line tool exposing all of its
+functionality in a manner for interactive or automated shell usage. Whether
+the command line tool is written in C or a higher level language is TBD.
+
+To list all resource partitions
+
+   $ workman partition-list
+   system
+   virtualmachines
+
+To list all resource consumers
+
+   $ workman consumer-list
+   httpd.service
+   crond.service
+   named.service
+   frank.user
+   fred.user
+   joe.user
+   web1.vm.lxc
+   web2.vm.qemu
+
+To list all resource consumers in the 'system' partition
+
+   $ workman consumer-list --partition system
+   httpd.service
+   crond.service
+   named.service
+   frank.user
+   fred.user
+   joe.user
+
+Or those in the 'virtualmachines' partition
+
+   $ workman consumer-list --partition virtualmachines
+   web1.vm.lxc
+   web2.vm.qemu
+
+To list all resource consumers which are system services
+
+   $ workman consumer-list --type service
+   httpd.service
+   crond.service
+   named.service
+
+To create a new resource partition
+
+   $ workman partition-create webapp
+
+To view settings for a resource group
+
+   $ workman partition-show webapp
+   cpus.allowed=1,2,3,4
+   mems.allowed=1,2,3,4
+
+To view a specific setting for a resource group
+
+   $ workman partition-get webapp cpus.allowed
+   1,2,3,4
+
+To apply settings to a resource group as a whole
+
+   $ workman partition-set webapp cpus.allowed 1,2
+   $ workman partition-set webapp mems.allowed 1,2
+
+To move a consumer into a new resource group
+
+   $ workman consumer-move httpd.service webapp
+
+To override group settings for a specific system service
+
+   $ workman consumer-set httpd.service cpus.allowed 1
+   $ workman consumer-set httpd.service mems.allowed 1
+
+To view processes associated with a consumer
+
+   $ workman consumer-ps httpd.service
+   2134
+   2135
+   2136
+
+To view processes associated with a partition
+
+   $ workman partition-ps webapp
+   2134
+   2135
+   2136
+
