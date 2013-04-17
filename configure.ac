@@ -89,6 +89,7 @@ AM_CONDITIONAL([WITH_GOBJECT_INTROSPECTION], [test "x$enable_introspection" = "x
 
 AC_OUTPUT(Makefile
           workman/Makefile
+          tools/Makefile
           docs/Makefile
           docs/workman/Makefile
           docs/workman/version.xml

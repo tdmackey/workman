@@ -1,5 +1,5 @@
 
-SUBDIRS = workman docs
+SUBDIRS = workman tools docs
 
 ACLOCAL_AMFLAGS = -I m4
 

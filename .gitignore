@@ -64,3 +64,4 @@ docs/workman/version.xml
 *.swp
 cscope.*
 workman/workman-enums.[ch]
+tools/workman

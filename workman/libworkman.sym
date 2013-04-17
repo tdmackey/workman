@@ -10,6 +10,7 @@ LIBworkman_0.0.1 {
         workman_object_save_attributes;
         workman_object_get_state;
         workman_object_attribute_list_get_type;
+        workman_object_get_name;
 
         workman_attribute_get_name;
         workman_attribute_get_type;
@@ -30,6 +31,7 @@ LIBworkman_0.0.1 {
         workman_manager_new;
         workman_manager_remove_partition;
         workman_manager_refresh_objects;
+        workman_manager_get_default;
 
         workman_partition_get_consumers;
         workman_partition_get_children;

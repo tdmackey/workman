@@ -49,10 +49,13 @@ libworkman_1_0_la_CFLAGS = \
 			-I$(top_srcdir) \
 			$(GLIB2_CFLAGS) \
 			$(GTHREAD2_CFLAGS) \
+			$(GOBJECT2_CFLAGS) \
 			$(WARN_CFLAGS)
 libworkman_1_0_la_LIBADD = \
 			$(GLIB2_LIBS) \
-			$(GTHREAD2_LIBS)
+			$(GTHREAD2_LIBS) \
+			$(GOBJECT2_LIBS) \
+			$(NULL)
 libworkman_1_0_la_DEPENDENCIES = \
 			libworkman.sym
 libworkman_1_0_la_LDFLAGS = \
