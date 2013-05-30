@@ -33,7 +33,7 @@ control or track different aspects of a process' behaviour.
 
  - cpu
 
-   Schedular parameter tuning
+   Scheduler parameter tuning
 
      * cpu.cfs_period_us  # scheduling period in nanoseconds
      * cpu.cfs_quota_us   # scheduling quota in nanoseconds
@@ -73,7 +73,7 @@ control or track different aspects of a process' behaviour.
  - memory
 
    Control over a wide variety of memory usage tunables and reporting
-   on usage statitics
+   on usage statistics
 
      * memory.failcnt                      # show the number of memory usage hits limits
      * memory.force_empty                  # trigger forced move charge to parent
@@ -124,7 +124,7 @@ control or track different aspects of a process' behaviour.
      * blkio.io_queued                   # Count of queued requests
      * blkio.io_service_bytes            # Byte transfer count per device
      * blkio.io_serviced                 # IO op count per device
-     * blkio.io_service_time             # Time between IO op request dispatch & completeion
+     * blkio.io_service_time             # Time between IO op request dispatch & completion
      * blkio.io_wait_time                # Time spent waiting on IO ops
      * blkio.reset_stats                 # Resets all accounting statistics
      * blkio.sectors                     # Sector transfer count per device
@@ -141,7 +141,7 @@ control or track different aspects of a process' behaviour.
 
  - perf_event
 
-   Unknown behaviour. Not documented AFAICT
+   Profile all processes in group via performance counter subsystem
 
 
 The current best practice is for all cgroup trees to be mounted at
@@ -151,9 +151,9 @@ or an application name if no controllers are associated.
 
 
 An important point to note is that not all controllers will fully
-honour the hiearchy. ie they may flatten it out so that all sub
+honour the hierarchy. ie they may flatten it out so that all sub
 groups are effectively operating at the first level. In addition for
-some controllers, performance will degrade as the hiearchy depth
+some controllers, performance will degrade as the hierarchy depth
 increases, or as the total number of groups increases.
 
 
@@ -187,7 +187,7 @@ interface traffic. The controls fall into 4 major buckets
 
 
 Processing of traffic is controlled via a number of objects, qdiscs, classes and
-fitlers. Each network interface has an associated qdisc, regardless of what type
+filters. Each network interface has an associated qdisc, regardless of what type
 of interface it is - physical, software bridge, TAP device, etc. This is particularly
 relevant for virtualization, since it means individual virtual NICs can have their
 traffic shaped. As mentioned earlier, as well as being associated with NICs, controls
@@ -216,7 +216,7 @@ System ulimits
 The setrlimit() system call / ulimit command can be used to control resources
 available to individual processes
 
- * RLIMIT_AS - process virutal memory address space limit
+ * RLIMIT_AS - process virtual memory address space limit
 
  * RLIMIT_CORE - core file size limit
 
@@ -257,7 +257,7 @@ Some of the controls are further scoped to individual devices
 or pieces of hardware. For example, as well as allowing global
 IPv4 tunables to be set, proc also allows for per-NIC tunables.
 Similarly sysfs lets block device tunables to be set, while
-proc has schedular also has tunables that are per-CPU.
+proc has scheduler also has tunables that are per-CPU.
 
 
 Hardware partitioning
@@ -265,7 +265,7 @@ Hardware partitioning
 
 There are many aspects to partitioning in modern hardware platforms
 
- * CPU/Memory - NUMA topology partitions systems in a hiearchal
+ * CPU/Memory - NUMA topology partitions systems in a hierarchal
                 topology of CPU sockets and memory nodes
 
  * Storage HBAs - NPIV technology allows FibreChannel HBAs to
@@ -338,7 +338,7 @@ then simply resource partitioning between VMs.
 
    In a case where the host is using network based storage, block I/O
    rates will have an impact not only on the block I/O performance of other
-   applications, but also the overall network performance. Conversly placing
+   applications, but also the overall network performance. Conversely placing
    policies on network traffic, can affect performance of block I/O.
 
 
@@ -352,7 +352,7 @@ then simply resource partitioning between VMs.
    to deal with isolation. Network switch technologies such as VEPA can
    allow traffic shaping to be offloaded to the network switch, which
    has a world view of all hosts in the LAN rather than just apps on
-   one host. A similar concept applies to storage utilizing NPIV techology,
+   one host. A similar concept applies to storage utilizing NPIV technology,
    where separating apps via vHBAs allows SAN-side control over resource
    utilization.
 
@@ -361,7 +361,7 @@ then simply resource partitioning between VMs.
 
    Resource control requirements can often be mutually exclusive. For
    example, strong isolation of CPU usage between apps can be achieved
-   by applying hard caps in schedular policy. The flipside is that the
+   by applying hard caps in scheduler policy. The flipside is that the
    machine may be forced to idle CPUs despite having runnable tasks
    because the runnable tasks have exceeded their quota.
 
@@ -413,7 +413,7 @@ will create two top level groups
   - system - with a subdirectory for each system service
   - user   - with a subdirectory for each logged in user
 
-This leads to a hiearchy such as this by default:
+This leads to a hierarchy such as this by default:
 
   /sys/fs/cgroup
    |
@@ -479,7 +479,7 @@ to a non-root user, to delegate management of the cgroup & its children.
 
 Finally, systemd can be told set arbitrary cgroup attributes against a
 service. One limitation is that if systemd is told to put a process in a deep
-subdirectory in a hiearchy, there is no built-in facility to set cgroup attributes
+subdirectory in a hierarchy, there is no built-in facility to set cgroup attributes
 in the parent levels. ie systemd only provides control over the leave nodes in
 the tree which hold the service processes. An external tool must be used to manage
 attributes in the branches.
@@ -493,8 +493,8 @@ daemon to hold a "world view" of the entire system. This is described in
 Systemd supports setting tunables beyond those available via cgroups, in particular:
 
   - System ulimits (via the setrlimit syscall)
-  - CPU schedular policy & priority (via the sched_setschedular syscall)
-  - I/O schedular class & priority (via the ioprio_set syscall)
+  - CPU scheduler policy & priority (via the sched_setscheduler syscall)
+  - I/O scheduler class & priority (via the ioprio_set syscall)
   - OOM score - (via /proc/$PID/oom_{adj,score,score_adj}
   - Nice level (via setpriority syscall)
 
@@ -512,7 +512,7 @@ cgroups will be used to group together processes associated with each individual
 instance. Libvirt defaults to creating a 3-level (LXC/QEMU) or 4-level (KVM)
 hierarchy. At the top level is simply a group called 'libvirt' under which all
 virtual machines or containers are placed. This group is not created in the root
-of the cgroup hiearchy, but rather at the location where libvirtd itself is running.
+of the cgroup hierarchy, but rather at the location where libvirtd itself is running.
 
 The second level is a per-driver group, used to separate KVM and LXC instances.
 The third level is a per-instance group, one per virtual machine or container.
@@ -578,7 +578,7 @@ Libvirt provides a number of APIs for controlling resource tuning parameters
 
    * virDomainGetSchedulerParameters, virDomainSetSchedulerParameters
 
-     CPU schedular parameters, primarily mapping to the 'cpu' cgroups
+     CPU scheduler parameters, primarily mapping to the 'cpu' cgroups
      controller parameters.
 
    * virDomainSetMemoryParameters, virDomainGetMemoryParameters
@@ -666,12 +666,12 @@ OpenStack
 
 The OpenStack architecture uses libvirt as its primary mechanism for controlling
 KVM virtual machines and LXC containers. The broad goal of OpenStack is to
-treat hardware as a service shared amongst a dispirate group of users. As
+treat hardware as a service shared amongst a disparate group of users. As
 such it focuses more on resource isolation, at the expense of overall hardware
 utilization.
 
 With that said, OpenStack's resource control capabilities at the time of
-writing are mostly non-existant. It has overcommit counters for overall host
+writing are mostly non-existent. It has overcommit counters for overall host
 CPU and memory usage. It then simply places VM instances within these constraints.
 For example, if a host has 4 GB of RAM, and memory overcommit is set at 1.5,
 it'll never schedule guests with more than 6 GB of total RAM allocation.
@@ -684,10 +684,10 @@ over future releases.
 Administration use cases
 ========================
 
-When considering solutions to the resource managment problem there are clearly
+When considering solutions to the resource management problem there are clearly
 many aspects which need to be considered and many technologies available to
 use. It is thus helpful to illustrate some broad user scenarios, which would
-form the basis for resource managment requirements.
+form the basis for resource management requirements.
 
  * Management against "tasks" rather than processes
 
@@ -753,7 +753,7 @@ form the basis for resource managment requirements.
 
    The system will be split into 2 partitions, each having 2 CPUs and
    8 GB of RAM. The division will mirror the NUMA topology. 2 users
-   will be assigned to each partiiton.
+   will be assigned to each partition.
 
    Within each partition, the policy can be set to either ensure fairness
    or ensure isolation between user workloads.
@@ -771,7 +771,7 @@ form the basis for resource managment requirements.
 
    The stock trading process must be allowed to burst upto 100% of all
    available CPU resources. Under memory pressure, the batch job must be
-   targetted for swapping, prior to considering the trading process.
+   targeted for swapping, prior to considering the trading process.
    Trading process network traffic must be transmitted with minimal
    latency, while the batch job traffic can be arbitrarily delayed.
 
@@ -788,7 +788,7 @@ form the basis for resource managment requirements.
    All the processes except for QEMU processes must have priority
    access to resources. In the event of contention between a host
    process and a virtual machine, the virtual machine must loose.
-   The virtual machines must be targetted for swapping, and the
+   The virtual machines must be targeted for swapping, and the
    OOM killer first. It must always be possible to login to the
    host OS via ssh and use libvirtd, regardless of virtual machine
    resource requirements.
@@ -828,7 +828,7 @@ form the basis for resource managment requirements.
  * Delegation of resource allocation to containers
 
    On a host using container virtualization, it must be possible
-   to delegate resource allocation to the container administator
+   to delegate resource allocation to the container administrator
 
    The system can be running a number of containers. The host
    administrator can assign containers resources. Inside the
@@ -861,13 +861,13 @@ Requirements
 
  * Resource groups administrative privileges can be delegated to users
 
- * The system will start with a default resoruces
+ * The system will start with a default resources
 
  * Objects can be set to start in designated resource groups
 
  * Objects can moved between resource groups while active
 
- * New objects inherit resouce group of the object creating them
+ * New objects inherit resource group of the object creating them
 
  * Tuning parameters can be set against resource groups
 
@@ -901,17 +901,17 @@ mechanisms that can be exposed.
 
 Current guidelines for usage of cgroups by applications are overly
 restrictive in that they force applications to build a cgroups hierarchy
-that reflects the process hierachy. For example, libvirt is required to
+that reflects the process hierarchy. For example, libvirt is required to
 create all its cgroups in the subdirectory where libvirtd was started.
-To satisfy the management requirements, it is neccesary for applications
-to be able to create cgroups in a hierarchy that is independant of the
-process management hierarchy. This will imply some enhacements to the
+To satisfy the management requirements, it is necessary for applications
+to be able to create cgroups in a hierarchy that is independent of the
+process management hierarchy. This will imply some enhancements to the
 current cgroups usage guidelines.
 
 The current libcgroup management library is broadly a direct mapping to
-the cgroups filesytem interface. This exposes an undesirably low level
+the cgroups file system interface. This exposes an undesirably low level
 interface to applications. For example, all applications see is a
-hiearchy of groups, with no information about the kind of object that
+hierarchy of groups, with no information about the kind of object that
 is associated with the group. ie they can't tell if a group is for a
 systemd service, a container, a virtual machine or user session. It
 also exposes the notion of controllers with multiple hierarchies which
@@ -946,7 +946,7 @@ maintainer.
 
 The library will have a corresponding command line tool which exposes
 all of its functionality in manner suitable for interactive usage by
-sysadmin administrators or usage in shell scripting.
+system administrators or usage in shell scripting.
 
 A graphical application will make use of the library (in any language
 appropriate) to allow administrators to graphically control the
@@ -963,19 +963,19 @@ Cgroups hierarchy
 
 As mentioned earlier, the key to providing a practical resource
 management framework is to make a change to the guidelines for how
-applications interact with groups, to de-couple the hiearchy from
-the process hiearchy.
+applications interact with groups, to de-couple the hierarchy from
+the process hierarchy.
 
-Roughly speaking the cgroup hiearchy will be considered to be made
+Roughly speaking the cgroup hierarchy will be considered to be made
 up of branches and leaves, where branches represent resource groups
-and leaves represent objects. This will not neccesarily be the full
+and leaves represent objects. This will not necessarily be the full
 story though, because privilege boundaries may cause an application
 or user to have restricted view over a sub-tree.
 
-For simplicity the ability to have different hiearchies under
+For simplicity the ability to have different hierarchies under
 different controllers will be totally ignored & not exposed. All
 controllers can be mounted at the same place, but if not, then the
-same hiearchy will be setup under all mounts.
+same hierarchy will be setup under all mounts.
 
 The system will start with a single default group, in which all
 objects initially live.
@@ -992,7 +992,7 @@ level too
    +- managers
 
 At first the only objects will be system services. Objects of this
-type will be in cgroups with a file etension of '.service'.
+type will be in cgroups with a file extension of '.service'.
 
  $ROOT
    +- system
@@ -1047,8 +1047,8 @@ for users. For example to specify that "berrange" goes into a
 Applications such as libvirt, may define their own types of object
 to represent things like virtual machines, containers, etc. By
 default objects that libvirt runs will be placed into the same
-resource group that libvirtd itself is currently located in. THis
-is in constrast to current libvirt behaviour, where it creates a
+resource group that libvirtd itself is currently located in. This
+is in contrast to current libvirt behaviour, where it creates a
 3-level hierarchy below its currently location
 
 So while old libvirt behaviour would be
@@ -1096,7 +1096,7 @@ groups, and VMs assigned to each group
        +- web3.qemu
 
 
-Simiarly to KVM, any LXC containers that libvirt launches would
+Similarly to KVM, any LXC containers that libvirt launches would
 follow a similar pattern, but with a different file extension
 to identify the object type.
 
@@ -1142,7 +1142,7 @@ to prioritize their web servers relative to each other
 
 
 Inside a container, the guest OS will have a view onto a subtree
-of the full hiearchy. So for example, a container 's service will
+of the full hierarchy. So for example, a container's service will
 start off in the same type of hierarchy:
 
   $CONTAINER_ROOT
@@ -1218,7 +1218,7 @@ the admin created:
    +- managers
        +- linda.234.ssh
 
-The user will likely want to isolate their login session proceses
+The user will likely want to isolate their login session processes
 from virtual machines, so they'll create a custom group for them
 
 
@@ -1258,7 +1258,7 @@ full use of GObject Introspection to allow dynamic access from languages
 including Python, Perl, JavaScript and Vala.
 
 The core idea behind the design of the library is to provide an API that
-exposes a general interface for resource control, which is indepedent of
+exposes a general interface for resource control, which is independent of
 any one specific implementation technology. This is to enable it to be
 flexible enough to support management of sysfs, cgroups, network traffic
 shaper, and any other resource control mechanisms relevant to a host,
@@ -1270,9 +1270,9 @@ leveraged, for example there will be object classes for a 'os', 'cpu',
 'network interface', 'cgroup', 'process group', 'systemd service',
 'virtual machine', etc. Each object class will expose a number of
 applicable tunables. Within certain constraints, it will be possible
-to re-arrange the object hiearchy. For example, a 'systemd service'
+to re-arrange the object hierarchy. For example, a 'systemd service'
 instance can be moved between any 'cgroup' object, but cannot be
-moved to be a child of a 'network inteface' object. Object instances
+moved to be a child of a 'network interface' object. Object instances
 will be responsible for handling updates of their tunables, and any
 hierarchy re-arrangements.
 
@@ -1280,7 +1280,7 @@ Given the varying technologies to be consumed, the library will support
 pluggable / dynamically loadable object implementations via a dlopen()
 capability.
 
-Something along the lines of the following class hiearchy is anticipated:
+Something along the lines of the following class hierarchy is anticipated:
 
  * Object                   The base object from which all inherit
     |
@@ -1301,7 +1301,7 @@ Something along the lines of the following class hiearchy is anticipated:
             +- QEMUDomain   A libvirt KVM/QEMU/UML VM
             +- LXCDomain    A libvirt LXC container
 
-The "Partition" and "Consumer" objects can be expressed as a hiearchy.
+The "Partition" and "Consumer" objects can be expressed as a hierarchy.
 Every Consumer is associated with exactly one Partition, while a Partition
 is associated with zero or one other Partition objects.
 
@@ -1339,12 +1339,12 @@ the canonical information.
  - /proc/sys: Provides information about the *current* settings for
    for Kernel objects
  - /etc/sysctl.d, /etc/sysctl.conf: Provides information about the
-   *future* settings for Kenrel objects
+   *future* settings for Kernel objects
  - Unknown: traffic shaping classifier definitions
 
 From these data sources it should be clear that the API will actually need
 to expose two distinct hierarchies. One hierarchy reflects the persistent
-config, that applies to future created objects. The other hierarcy reflects
+config, that applies to future created objects. The other hierarchy reflects
 the current state of the running system. It should be possible to synchronize
 configuration in both directions. ie take current running configuration and
 persistent it, or refresh the current running configuration from the offline
